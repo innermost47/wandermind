@@ -1,23 +1,27 @@
 import whisper
-from pydub import AudioSegment
+import audiosegment
 from io import BytesIO
+import torch
 
-model = whisper.load_model("base")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+model = whisper.load_model("small", device=device)
 
 
 def convert_audio_to_wav(file, file_format):
     if file_format == "webm":
-        audio = AudioSegment.from_file(file, format="webm")
+        audio = audiosegment.from_file(file, format="webm").resample(
+            sample_rate_Hz=16000, channels=1
+        )
     elif file_format == "wav":
-        audio = AudioSegment.from_file(file, format="wav")
+        audio = audiosegment.from_file(file, format="wav").resample(
+            sample_rate_Hz=16000, channels=1
+        )
     else:
         raise ValueError("Format audio non supporté")
-
-    audio = audio.set_channels(1).set_frame_rate(16000)
     wav_file = BytesIO()
     audio.export(wav_file, format="wav")
     wav_file.seek(0)
-
     return wav_file
 
 

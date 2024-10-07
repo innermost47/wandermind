@@ -12,13 +12,19 @@ const askQuestion = document.getElementById("askQuestion");
 const questionInput = document.getElementById("questionInput");
 const llmResponse = document.getElementById("llmResponse");
 
+let audioQueue = [];
+let isPlaying = false;
 let audioElement = new Audio();
 audioElement.muted = true;
 
 function getCurrentPosition() {
   return new Promise((resolve, reject) => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(resolve, reject);
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      });
     } else {
       reject(new Error("Geolocation is not supported by this browser."));
     }
@@ -33,7 +39,7 @@ async function sendLocationToBackend() {
     location.textContent =
       "Latitude : " + latitude + " - Longitude : " + longitude;
 
-    const response = await fetch("/wikipedia", {
+    const response = await fetch("./wikipedia", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -48,7 +54,7 @@ async function sendLocationToBackend() {
 }
 
 function deleteAudio(audioPath) {
-  fetch("/delete_audio", {
+  fetch("./delete_audio", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -67,6 +73,34 @@ function deleteAudio(audioPath) {
     });
 }
 
+async function playNextAudio() {
+  if (audioQueue.length === 0) {
+    isPlaying = false;
+    return;
+  }
+
+  isPlaying = true;
+  const nextAudio = audioQueue.shift();
+  audioElement.src = nextAudio;
+
+  try {
+    await playAudio(audioElement);
+    deleteAudio(audioElement.src);
+    playNextAudio();
+  } catch (error) {
+    console.error("Error playing audio:", error);
+    playNextAudio();
+  }
+}
+
+function playAudio(audioElement) {
+  return new Promise((resolve, reject) => {
+    audioElement.play();
+    audioElement.onended = resolve;
+    audioElement.onerror = reject;
+  });
+}
+
 async function processStreamedResponse(response) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder("utf-8");
@@ -74,31 +108,27 @@ async function processStreamedResponse(response) {
   llmResponse.textContent = "";
   const renderer = smd.default_renderer(llmResponse);
   const parser = smd.parser(renderer);
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-
     result += decoder.decode(value, { stream: true });
+    let json;
     try {
-      const json = JSON.parse(result);
-      if (json.text) {
-        renderMarkdown(parser, json.text);
-      }
-      if (json.audio) {
-        audioElement.src = json.audio;
-        audioElement.onended = () => {
-          console.log("Audio playback finished, clearing audio source.");
-          deleteAudio(audioElement.src);
-          audioElement.src = "";
-        };
-        audioElement.onerror = () => {
-          console.error("Error playing audio file:", json.audio);
-        };
-        audioElement.play();
-      }
+      json = JSON.parse(result);
       result = "";
     } catch (error) {
-      console.error(error);
+      continue;
+    }
+
+    if (json.text) {
+      renderMarkdown(parser, json.text);
+    }
+    if (json.audio) {
+      audioQueue.push(json.audio);
+      if (!isPlaying) {
+        playNextAudio();
+      }
     }
   }
 }
@@ -111,7 +141,7 @@ async function ask() {
   const question = questionInput.value;
 
   try {
-    const response = await fetch("/llm", {
+    const response = await fetch("./llm", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -152,7 +182,7 @@ async function handleRecording() {
           transcription.textContent = "Transcription en cours...";
 
           try {
-            const response = await fetch("/transcribe", {
+            const response = await fetch("./transcribe", {
               method: "POST",
               body: formData,
             });

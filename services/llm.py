@@ -1,8 +1,11 @@
 from llama_cpp import Llama
-from services.utils import split_text_on_punctuation
 from services.tts import text_to_speech_to_file
+from dotenv import load_dotenv
+import os
 
-llm = Llama(model_path="./model/llama.gguf", n_ctx=24000)
+load_dotenv()
+
+llm = Llama(model_path=os.environ.get("LLM_MODEL"), n_ctx=16000)
 
 memory = []
 

@@ -1,10 +1,18 @@
 from gtts import gTTS
 from uuid import uuid4
 import os
+from bs4 import BeautifulSoup
+from markdown import markdown
+
+
+def strip_markdown(text):
+    html = markdown(text)
+    return "".join(BeautifulSoup(html, features="html.parser").findAll(text=True))
 
 
 def text_to_speech(text, file_path):
-    tts = gTTS(text=text, lang="fr")
+    plain_text = strip_markdown(text)
+    tts = gTTS(text=plain_text, lang="fr")
     with open(file_path, "wb") as f:
         tts.write_to_fp(f)
 

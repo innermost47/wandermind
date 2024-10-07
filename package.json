@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack",
     "watch": "webpack --watch",
-    "start": "concurrently \"npm run watch\" \"flask run\""
+    "start": "npm run watch"
   },
   "keywords": [],
   "author": "",

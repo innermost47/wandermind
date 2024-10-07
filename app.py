@@ -1,4 +1,12 @@
-from flask import Flask, jsonify, request, Response, render_template, session
+from flask import (
+    Flask,
+    jsonify,
+    request,
+    Response,
+    render_template,
+    session,
+    stream_with_context,
+)
 from services.wikipedia import get_wikipedia_data
 from services.llm import query_llm
 from services.whisper import transcribe_audio
@@ -6,6 +14,7 @@ import json
 from dotenv import load_dotenv
 import os
 from urllib.parse import urlparse
+import sys
 
 load_dotenv()
 
@@ -46,7 +55,6 @@ def wikipedia():
     return Response(generate(), mimetype="text/event-stream")
 
 
-@app.route("/llm", methods=["POST"])
 def llm():
     data = request.json
     question = data.get("question")
@@ -64,8 +72,9 @@ def llm():
     def generate():
         for chunk in query_llm(question, context):
             yield json.dumps(chunk).encode("utf-8")
+            sys.stdout.flush()
 
-    return Response(generate(), mimetype="text/event-stream")
+    return Response(stream_with_context(generate()), mimetype="text/event-stream")
 
 
 @app.route("/delete_audio", methods=["POST"])
