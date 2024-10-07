@@ -58,6 +58,7 @@ def wikipedia():
     return Response(generate(), mimetype="text/event-stream")
 
 
+@app.route("/llm", methods=["POST"])
 def llm():
     data = request.json
     question = data.get("question")
