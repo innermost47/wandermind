@@ -12,10 +12,30 @@ const askQuestion = document.getElementById("askQuestion");
 const questionInput = document.getElementById("questionInput");
 const llmResponse = document.getElementById("llmResponse");
 
+let autoScrollEnabled = true;
 let audioQueue = [];
 let isPlaying = false;
 let audioElement = new Audio();
 audioElement.muted = true;
+
+function checkScrollPosition() {
+  const nearBottom =
+    window.innerHeight + window.scrollY >= document.body.offsetHeight - 100;
+  if (nearBottom) {
+    autoScrollEnabled = true;
+  } else {
+    autoScrollEnabled = false;
+  }
+}
+
+function scrollToBottom() {
+  if (autoScrollEnabled) {
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth",
+    });
+  }
+}
 
 function getCurrentPosition() {
   return new Promise((resolve, reject) => {
@@ -112,29 +132,36 @@ async function processStreamedResponse(response) {
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    result += decoder.decode(value, { stream: true });
-    let json;
-    try {
-      json = JSON.parse(result);
-      result = "";
-    } catch (error) {
-      continue;
-    }
 
-    if (json.text) {
-      renderMarkdown(parser, json.text);
-    }
-    if (json.audio) {
-      audioQueue.push(json.audio);
-      if (!isPlaying) {
-        playNextAudio();
+    result += decoder.decode(value, { stream: true });
+
+    let parts = result.split("<|end_of_chunk|>");
+
+    for (let i = 0; i < parts.length - 1; i++) {
+      let jsonString = parts[i].trim();
+      if (jsonString === "") continue;
+      try {
+        let json = JSON.parse(jsonString);
+        if (json.text) {
+          renderMarkdown(parser, json.text);
+        }
+        if (json.audio) {
+          audioQueue.push(json.audio);
+          if (!isPlaying) {
+            playNextAudio();
+          }
+        }
+      } catch (error) {
+        console.error("Erreur lors du parsing JSON :", error);
       }
     }
+    result = parts[parts.length - 1];
   }
 }
 
 function renderMarkdown(parser, text) {
   smd.parser_write(parser, text);
+  scrollToBottom();
 }
 
 async function ask() {
@@ -223,5 +250,7 @@ muteButton.addEventListener("click", () => {
 volumeSlider.addEventListener("input", (event) => {
   audioElement.volume = event.target.value;
 });
+
+window.addEventListener("scroll", checkScrollPosition);
 
 handleRecording();

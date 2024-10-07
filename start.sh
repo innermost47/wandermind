@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source ./env/Scripts/activate
 export $(grep -v '^#' .env | xargs)
 
 if [ "$FLASK_ENV" == "development" ]; then

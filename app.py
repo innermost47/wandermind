@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 import os
 from urllib.parse import urlparse
 import sys
+import time
 
 load_dotenv()
 
@@ -50,7 +51,9 @@ def wikipedia():
         for chunk in query_llm(
             "Présentez ce lieu comme un guide touristique.", wikipedia_content
         ):
-            yield json.dumps(chunk).encode("utf-8")
+            data = json.dumps(chunk).encode("utf-8") + b"<|end_of_chunk|>"
+            yield data
+            sys.stdout.flush()
 
     return Response(generate(), mimetype="text/event-stream")
 
@@ -71,7 +74,8 @@ def llm():
 
     def generate():
         for chunk in query_llm(question, context):
-            yield json.dumps(chunk).encode("utf-8")
+            data = json.dumps(chunk).encode("utf-8") + b"<|end_of_chunk|>"
+            yield data
             sys.stdout.flush()
 
     return Response(stream_with_context(generate()), mimetype="text/event-stream")
