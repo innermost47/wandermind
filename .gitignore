@@ -1,0 +1,10 @@
+__pycache__
+env
+model/*
+!model/.gitkeep
+node_modules
+static/js/bundle.js
+!static/js/.gitkeep
+static/audio/*
+!static/audio/.gitkeep
+.env
