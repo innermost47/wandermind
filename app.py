@@ -9,15 +9,12 @@ from flask import (
     redirect,
     url_for,
 )
-from services.wikipedia import get_wikipedia_data
-from services.llm import query_llm
-from services.whisper import transcribe_audio
+from services import get_wikipedia_data, query_llm, transcribe_audio, verify_token
 import json
 from dotenv import load_dotenv
 import os
 from urllib.parse import urlparse
 import sys
-from services.auth import verify_token
 from config import Config
 from models import User
 from extensions import db
