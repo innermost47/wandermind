@@ -98,11 +98,9 @@ async function playNextAudio() {
     isPlaying = false;
     return;
   }
-
   isPlaying = true;
   const nextAudio = audioQueue.shift();
   audioElement.src = nextAudio;
-
   try {
     await playAudio(audioElement);
     deleteAudio(audioElement.src);
@@ -132,11 +130,8 @@ async function processStreamedResponse(response) {
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-
     result += decoder.decode(value, { stream: true });
-
     let parts = result.split("<|end_of_chunk|>");
-
     for (let i = 0; i < parts.length - 1; i++) {
       let jsonString = parts[i].trim();
       if (jsonString === "") continue;
@@ -167,7 +162,6 @@ function renderMarkdown(parser, text) {
 async function ask() {
   const question = questionInput.value;
   questionInput.value = "";
-
   try {
     const response = await fetch("./llm", {
       method: "POST",
@@ -194,20 +188,15 @@ async function handleRecording() {
       .then((stream) => {
         mediaRecorder = new MediaRecorder(stream);
         mediaRecorder.start();
-
         mediaRecorder.ondataavailable = (event) => {
           audioChunks.push(event.data);
         };
-
         mediaRecorder.onstop = async () => {
           const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
           audioChunks = [];
-
           const formData = new FormData();
           formData.append("file", audioBlob, "audio.webm");
-
           transcription.textContent = "Transcription en cours...";
-
           try {
             const response = await fetch("./transcribe", {
               method: "POST",
@@ -243,23 +232,34 @@ async function handleRecording() {
   });
 }
 
-getLocation.addEventListener("click", sendLocationToBackend);
-askQuestion.addEventListener("click", ask);
+if (getLocation) {
+  getLocation.addEventListener("click", sendLocationToBackend);
+}
 
-muteButton.addEventListener("click", () => {
-  if (audioElement.muted) {
-    audioElement.muted = false;
-    muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-up"></i> Mute`;
-  } else {
-    audioElement.muted = true;
-    muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-mute"></i> Unmute`;
-  }
-});
+if (askQuestion) {
+  askQuestion.addEventListener("click", ask);
+}
 
-volumeSlider.addEventListener("input", (event) => {
-  audioElement.volume = event.target.value;
-});
+if (muteButton) {
+  muteButton.addEventListener("click", () => {
+    if (audioElement.muted) {
+      audioElement.muted = false;
+      muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-up"></i> Mute`;
+    } else {
+      audioElement.muted = true;
+      muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-mute"></i> Unmute`;
+    }
+  });
+}
+
+if (volumeSlider) {
+  volumeSlider.addEventListener("input", (event) => {
+    audioElement.volume = event.target.value;
+  });
+}
+
+if (startRecording && stopRecording) {
+  handleRecording();
+}
 
 window.addEventListener("scroll", checkScrollPosition);
-
-handleRecording();

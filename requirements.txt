@@ -10,3 +10,5 @@ librosa
 scipy
 markdown
 bs4
+Flask-SQLAlchemy
+psycopg2
