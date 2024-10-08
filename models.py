@@ -17,9 +17,6 @@ class User(db.Model):
 
     def __init__(self, email, is_admin=False, expiration_in_days=30):
         self.email = email
-        token_clear = secrets.token_urlsafe(32)
-        print(f"Generated token for {email}: {token_clear}")
-        self.token = self.hash_token(token_clear)
         self.created_at = datetime.now(timezone.utc)
         self.token_expiration = datetime.now(timezone.utc) + timedelta(
             days=expiration_in_days

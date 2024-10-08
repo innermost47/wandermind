@@ -9,7 +9,14 @@ from flask import (
     redirect,
     url_for,
 )
-from services import get_wikipedia_data, query_llm, transcribe_audio, verify_token
+from services import (
+    get_wikipedia_data,
+    query_llm,
+    transcribe_audio,
+    verify_token,
+    send_email,
+    get_email_for_account_creation,
+)
 import json
 from dotenv import load_dotenv
 import os
@@ -21,6 +28,8 @@ from extensions import db
 from datetime import datetime, timezone
 import secrets
 from threading import Lock
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 
 load_dotenv()
 
@@ -30,6 +39,7 @@ app.config.from_object(Config)
 db.init_app(app)
 
 app.secret_key = os.environ.get("SECRET")
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_prefix=1)
 
 whisper_lock = Lock()
 llm_lock = Lock()
@@ -82,10 +92,15 @@ def add_user():
             error = "This email is already in use. Please use a different email."
             return render_template("admin.html", error=error)
         token_clear = secrets.token_urlsafe(32)
-        new_user = User(email=email)
+        expiration_in_days = 30
+        new_user = User(email=email, expiration_in_days=expiration_in_days)
         new_user.token = User.hash_token(token_clear)
         db.session.add(new_user)
         db.session.commit()
+        subject, email_body = get_email_for_account_creation(
+            token_clear=token_clear, token_expiry_days=expiration_in_days
+        )
+        send_email(email, subject, email_body)
         return render_template("admin.html", token_clear=token_clear, success=True)
     return render_template("admin.html")
 
@@ -192,9 +207,17 @@ if __name__ == "__main__":
         if not admin_user:
             print("Creating admin user...")
             admin_email = os.environ.get("ADMIN_EMAIL")
-            admin_user = User(email=admin_email, is_admin=True, expiration_in_days=365)
+            token_clear = secrets.token_urlsafe(32)
+            expiration_in_days = 365
+            admin_user = User(
+                email=admin_email, is_admin=True, expiration_in_days=expiration_in_days
+            )
+            admin_user.token = User.hash_token(token_clear)
             db.session.add(admin_user)
             db.session.commit()
-
+            subject, email_body = get_email_for_account_creation(
+                token_clear=token_clear, token_expiry_days=expiration_in_days
+            )
+            send_email(admin_email, subject, email_body)
             print(f"Admin user created with email: {admin_email}")
     app.run(debug=True)
