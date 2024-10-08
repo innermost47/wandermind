@@ -5,7 +5,7 @@ gtts
 openai-whisper  
 python-dotenv
 waitress
-audiosegment
+pydub
 librosa
 scipy
 markdown

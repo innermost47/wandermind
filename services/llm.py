@@ -5,7 +5,11 @@ import os
 
 load_dotenv()
 
-llm = Llama(model_path=os.environ.get("LLM_MODEL"), n_ctx=16000)
+llm = Llama(
+    model_path=os.environ.get("LLM_MODEL"),
+    n_ctx=int(os.environ.get("N_CTX_SIZE")),
+    n_gpu_layers=int(os.environ.get("N_GPU_LAYERS")),
+)
 
 memory = []
 

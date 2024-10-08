@@ -1,7 +1,6 @@
 import * as smd from "streaming-markdown";
 
 const muteButton = document.getElementById("muteButton");
-const muteIcon = document.getElementById("muteIcon");
 const volumeSlider = document.getElementById("volumeSlider");
 const transcription = document.getElementById("transcription");
 const startRecording = document.getElementById("startRecording");
@@ -53,6 +52,7 @@ function getCurrentPosition() {
 
 async function sendLocationToBackend() {
   try {
+    questionInput.value = "";
     const position = await getCurrentPosition();
     const { latitude, longitude } = position.coords;
 
@@ -166,6 +166,7 @@ function renderMarkdown(parser, text) {
 
 async function ask() {
   const question = questionInput.value;
+  questionInput.value = "";
 
   try {
     const response = await fetch("./llm", {
@@ -187,13 +188,12 @@ async function handleRecording() {
   let audioChunks = [];
 
   const start = () => {
+    transcription.textContent = "";
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then((stream) => {
         mediaRecorder = new MediaRecorder(stream);
         mediaRecorder.start();
-        startRecording.disabled = true;
-        startRecording.disabled = false;
 
         mediaRecorder.ondataavailable = (event) => {
           audioChunks.push(event.data);
@@ -213,8 +213,13 @@ async function handleRecording() {
               method: "POST",
               body: formData,
             });
-            const data = await response.json();
-            transcription.textContent = data.transcription;
+            if (response.status >= 300) {
+              transcription.textContent = "Erreur lors de la transcription.";
+            } else {
+              const data = await response.json();
+              transcription.textContent = "Transcription réalisée avec succès.";
+              questionInput.value = data.transcription;
+            }
           } catch (error) {
             console.error("Error transcribing audio:", error);
             transcription.textContent = "Erreur lors de la transcription.";
@@ -226,7 +231,11 @@ async function handleRecording() {
       });
   };
 
-  startRecording.addEventListener("click", start);
+  startRecording.addEventListener("click", () => {
+    startRecording.disabled = true;
+    stopRecording.disabled = false;
+    start();
+  });
   stopRecording.addEventListener("click", () => {
     mediaRecorder.stop();
     startRecording.disabled = false;
