@@ -121,7 +121,7 @@ def wikipedia():
         return jsonify({"error": "Invalid location data"}), 400
 
     wikipedia_content = get_wikipedia_data(latitude, longitude)
-
+    session_memory = session.get("memory", [])
     if not wikipedia_content:
         return (
             jsonify({"error": "No relevant information found for this location."}),
@@ -131,7 +131,10 @@ def wikipedia():
 
     def generate():
         for chunk in query_llm(
-            "Présentez ce lieu comme un guide touristique.", wikipedia_content, llm_lock
+            "Présentez ce lieu comme un guide touristique.",
+            wikipedia_content,
+            llm_lock,
+            session_memory,
         ):
             data = json.dumps(chunk).encode("utf-8") + b"<|end_of_chunk|>"
             yield data
@@ -154,9 +157,10 @@ def llm():
             ),
             400,
         )
+    session_memory = session.get("memory", [])
 
     def generate():
-        for chunk in query_llm(question, context, llm_lock):
+        for chunk in query_llm(question, context, llm_lock, session_memory):
             data = json.dumps(chunk).encode("utf-8") + b"<|end_of_chunk|>"
             yield data
             sys.stdout.flush()

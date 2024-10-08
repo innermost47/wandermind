@@ -11,10 +11,8 @@ llm = Llama(
     n_gpu_layers=int(os.environ.get("N_GPU_LAYERS")),
 )
 
-memory = []
 
-
-def query_llm(prompt, context, lock):
+def query_llm(prompt, context, lock, session_memory):
     with lock:
         if not context or context.strip() == "":
             auto_message = "We couldn't find any relevant information for this location. Please try another place."
@@ -34,7 +32,7 @@ def query_llm(prompt, context, lock):
     Contexte : {context}""",
                 }
             ]
-            + memory[-8:]
+            + session_memory[-8:]
             + [
                 {
                     "role": "user",
@@ -63,5 +61,5 @@ def query_llm(prompt, context, lock):
         if buffer.strip():
             audio_file_path = text_to_speech_to_file(buffer)
             yield {"text": None, "audio": audio_file_path}
-        memory.append({"role": "user", "content": prompt})
-        memory.append({"role": "assistant", "content": content})
+        session_memory.append({"role": "user", "content": prompt})
+        session_memory.append({"role": "assistant", "content": content})
