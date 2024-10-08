@@ -10,4 +10,3 @@ librosa
 scipy
 markdown
 bs4
-fcntl

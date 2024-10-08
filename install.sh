@@ -1,5 +1,13 @@
 #!/bin/bash
 
+DIRECTORY="env"
+
+if [ ! -d "$DIRECTORY" ]; then
+  python -m venv "$DIRECTORY"
+fi
+
+source env/Scripts/activate
+
 export CMAKE_ARGS=-DGGML_CUBLAS=on
 export FORCE_CMAKE=1
 
