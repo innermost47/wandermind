@@ -23,6 +23,7 @@ from models import User
 from extensions import db
 from datetime import datetime, timezone
 import secrets
+from threading import Lock
 
 load_dotenv()
 
@@ -32,6 +33,9 @@ app.config.from_object(Config)
 db.init_app(app)
 
 app.secret_key = os.environ.get("SECRET")
+
+whisper_lock = Lock()
+llm_lock = Lock()
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -115,7 +119,7 @@ def wikipedia():
 
     def generate():
         for chunk in query_llm(
-            "Présentez ce lieu comme un guide touristique.", wikipedia_content
+            "Présentez ce lieu comme un guide touristique.", wikipedia_content, llm_lock
         ):
             data = json.dumps(chunk).encode("utf-8") + b"<|end_of_chunk|>"
             yield data
@@ -140,7 +144,7 @@ def llm():
         )
 
     def generate():
-        for chunk in query_llm(question, context):
+        for chunk in query_llm(question, context, llm_lock):
             data = json.dumps(chunk).encode("utf-8") + b"<|end_of_chunk|>"
             yield data
             sys.stdout.flush()
@@ -178,7 +182,7 @@ def transcribe():
     else:
         return jsonify({"error": "Unsupported file format"}), 400
     try:
-        transcription = transcribe_audio(file, file_format)
+        transcription = transcribe_audio(file, file_format, whisper_lock)
         return jsonify({"transcription": transcription})
     except Exception as e:
         return jsonify({"error": str(e)}), 500

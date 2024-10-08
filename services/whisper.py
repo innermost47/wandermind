@@ -43,14 +43,17 @@ def convert_audio_to_wav(file, file_format):
         raise e
 
 
-def transcribe_audio(file, file_format):
-    try:
-        wav_file = convert_audio_to_wav(file, file_format)
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav_file:
-            temp_wav_file.write(wav_file.read())
-            temp_wav_file.flush()
-            result = model.transcribe(temp_wav_file.name)
-        return result["text"]
-    except Exception as e:
-        print(f"An error occured while trying to transcribe audio: {e}")
-        raise e
+def transcribe_audio(file, file_format, lock):
+    with lock:
+        try:
+            wav_file = convert_audio_to_wav(file, file_format)
+            with tempfile.NamedTemporaryFile(
+                suffix=".wav", delete=False
+            ) as temp_wav_file:
+                temp_wav_file.write(wav_file.read())
+                temp_wav_file.flush()
+                result = model.transcribe(temp_wav_file.name)
+            return result["text"]
+        except Exception as e:
+            print(f"An error occured while trying to transcribe audio: {e}")
+            raise e
