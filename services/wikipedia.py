@@ -1,4 +1,8 @@
 import requests
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 
 def get_wikipedia_data(lat, lon):
@@ -11,7 +15,8 @@ def get_wikipedia_data(lat, lon):
         "gslimit": 1,
         "format": "json",
     }
-    response = requests.get(url, params=params, verify=False)
+    verify = True if os.environ.get("VERIFY") == "True" else False
+    response = requests.get(url, params=params, verify=verify)
     if response.status_code == 200:
         data = response.json()
         if data["query"]["geosearch"]:
@@ -29,7 +34,8 @@ def get_wikipedia_page(page_id):
         "explaintext": True,
         "format": "json",
     }
-    response = requests.get(url, params=params, verify=False)
+    verify = True if os.environ.get("VERIFY") == "True" else False
+    response = requests.get(url, params=params, verify=verify)
     if response.status_code == 200:
         page = response.json()
         return page["query"]["pages"][str(page_id)]["extract"]
