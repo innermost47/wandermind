@@ -16,6 +16,8 @@ from services import (
     verify_token,
     send_email,
     get_email_for_account_creation,
+    get_foursquare_data,
+    get_nearby_events,
 )
 import json
 from dotenv import load_dotenv
@@ -111,6 +113,31 @@ def logout():
     return redirect(url_for("login"))
 
 
+def handle_place_request(
+    latitude, longitude, query=None, category=None, radius=1000, llm_message=None
+):
+    if not latitude or not longitude:
+        return jsonify({"error": "Invalid location data"}), 400
+    places = get_foursquare_data(
+        latitude, longitude, query=query, category=category, radius=radius
+    )
+    session_memory = session.get("memory", [])
+    if not places:
+        return (
+            jsonify({"error": "No relevant information found for this location."}),
+            404,
+        )
+    session["actual_content"] = places
+
+    def generate():
+        for chunk in query_llm(llm_message, places, llm_lock, session_memory):
+            data = json.dumps(chunk).encode("utf-8") + b"<|end_of_chunk|>"
+            yield data
+            sys.stdout.flush()
+
+    return Response(stream_with_context(generate()), mimetype="text/event-stream")
+
+
 @app.route("/wikipedia", methods=["POST"])
 def wikipedia():
     data = request.json
@@ -127,11 +154,16 @@ def wikipedia():
             jsonify({"error": "No relevant information found for this location."}),
             404,
         )
-    session["wikipedia_content"] = wikipedia_content
+    session["actual_content"] = wikipedia_content
 
     def generate():
+        llm_message = (
+            "Présentez ce lieu comme un guide touristique réel, similaire à ceux que l'on trouve dans les sorties touristiques, "
+            "et non comme un livre ou un document informatif. Fournissez une description vivante et engageante qui attire "
+            "l'attention des visiteurs et leur donne envie d'explorer cet endroit."
+        )
         for chunk in query_llm(
-            "Présentez ce lieu comme un guide touristique.",
+            llm_message,
             wikipedia_content,
             llm_lock,
             session_memory,
@@ -143,11 +175,92 @@ def wikipedia():
     return Response(generate(), mimetype="text/event-stream")
 
 
+@app.route("/events", methods=["POST"])
+def events():
+    data = request.json
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+
+    if not latitude or not longitude:
+        return jsonify({"error": "Invalid location data"}), 400
+
+    events = get_nearby_events(latitude, longitude)
+    session_memory = session.get("memory", [])
+    if not events:
+        return (
+            jsonify({"error": "No relevant information found for this location."}),
+            404,
+        )
+    session["actual_content"] = events
+
+    def generate():
+        for chunk in query_llm(
+            "L'utilisateur veut davantage d'informations sur ces événements. Fournis-lui une description basée sur les données disponibles.",
+            events,
+            llm_lock,
+            session_memory,
+        ):
+            data = json.dumps(chunk).encode("utf-8") + b"<|end_of_chunk|>"
+            yield data
+            sys.stdout.flush()
+
+    return Response(generate(), mimetype="text/event-stream")
+
+
+@app.route("/restaurant", methods=["POST"])
+def restaurant():
+    data = request.json
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+
+    return handle_place_request(
+        latitude,
+        longitude,
+        query="restaurants",
+        llm_message="L'utilisateur veut davantage d'informations sur ces restaurants. Fournis-lui une description basée sur les données disponibles.",
+    )
+
+
+@app.route("/accommodations", methods=["POST"])
+def accommodations():
+    data = request.json
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+
+    return handle_place_request(
+        latitude,
+        longitude,
+        category="19014,19012,19013,19006",
+        radius=3000,
+        llm_message="L'utilisateur veut davantage d'informations sur ces hébergements. Fournis-lui une description basée sur les données disponibles.",
+    )
+
+
+@app.route("/culturals", methods=["POST"])
+def culturals():
+    data = request.json
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+
+    return handle_place_request(
+        latitude,
+        longitude,
+        category="10027,10023,10034,10032",
+        radius=1000,
+        llm_message=(
+            "L'utilisateur veut davantage d'informations sur ces lieux culturels. "
+            "Les catégories sont les suivantes : 10027 pour les musées, 10023 pour les galeries d'art, "
+            "10034 pour les lieux historiques, et 10032 pour les bibliothèques. "
+            "Fournis-lui une description basée sur les données disponibles."
+        ),
+    )
+
+
 @app.route("/llm", methods=["POST"])
 def llm():
     data = request.json
     question = data.get("question")
-    context = session.get("wikipedia_content")
+    context = session.get("actual_content")
     if not context:
         return (
             jsonify(

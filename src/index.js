@@ -6,7 +6,10 @@ const transcription = document.getElementById("transcription");
 const startRecording = document.getElementById("startRecording");
 const stopRecording = document.getElementById("stopRecording");
 const getLocation = document.getElementById("getLocation");
-const location = document.getElementById("location");
+const getRestaurants = document.getElementById("getRestaurants");
+const getAccomodations = document.getElementById("getAccomodations");
+const getEvents = document.getElementById("getEvents");
+const getCulturals = document.getElementById("getCulturals");
 const askQuestion = document.getElementById("askQuestion");
 const questionInput = document.getElementById("questionInput");
 const llmResponse = document.getElementById("llmResponse");
@@ -50,16 +53,15 @@ function getCurrentPosition() {
   });
 }
 
-async function sendLocationToBackend() {
+async function fetchLocationData(url) {
   try {
+    llmResponse.classList.add("d-none");
     questionInput.value = "";
+
     const position = await getCurrentPosition();
     const { latitude, longitude } = position.coords;
 
-    location.textContent =
-      "Latitude : " + latitude + " - Longitude : " + longitude;
-
-    const response = await fetch("./wikipedia", {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -67,7 +69,9 @@ async function sendLocationToBackend() {
       body: JSON.stringify({ latitude, longitude }),
     });
 
-    await processStreamedResponse(response);
+    if (parseInt(response.status) === 200) {
+      await processStreamedResponse(response);
+    }
   } catch (error) {
     console.error("Error getting location or fetching LLM data:", error);
   }
@@ -123,6 +127,7 @@ async function processStreamedResponse(response) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder("utf-8");
   let result = "";
+  llmResponse.classList.remove("d-none");
   llmResponse.textContent = "";
   const renderer = smd.default_renderer(llmResponse);
   const parser = smd.parser(renderer);
@@ -162,6 +167,7 @@ function renderMarkdown(parser, text) {
 async function ask() {
   const question = questionInput.value;
   questionInput.value = "";
+  llmResponse.classList.add("d-none");
   try {
     const response = await fetch("./llm", {
       method: "POST",
@@ -170,8 +176,9 @@ async function ask() {
       },
       body: JSON.stringify({ question }),
     });
-
-    await processStreamedResponse(response);
+    if (parseInt(response.status) === 200) {
+      await processStreamedResponse(response);
+    }
   } catch (error) {
     console.error("Error asking LLM:", error);
   }
@@ -196,6 +203,10 @@ async function handleRecording() {
           audioChunks = [];
           const formData = new FormData();
           formData.append("file", audioBlob, "audio.webm");
+          transcription.classList.remove("d-none");
+          transcription.classList.remove("alert-danger");
+          transcription.classList.remove("alert-success");
+          transcription.classList.add("alert-info");
           transcription.textContent = "Transcription en cours...";
           try {
             const response = await fetch("./transcribe", {
@@ -203,15 +214,23 @@ async function handleRecording() {
               body: formData,
             });
             if (response.status >= 300) {
+              transcription.classList.remove("alert-info");
+              transcription.classList.add("alert-danger");
               transcription.textContent = "Erreur lors de la transcription.";
             } else {
               const data = await response.json();
+              transcription.classList.remove("alert-info");
+              transcription.classList.add("alert-success");
               transcription.textContent = "Transcription réalisée avec succès.";
               questionInput.value = data.transcription;
             }
           } catch (error) {
             console.error("Error transcribing audio:", error);
             transcription.textContent = "Erreur lors de la transcription.";
+          } finally {
+            setTimeout(() => {
+              transcription.classList.add("d-none");
+            }, 3000);
           }
         };
       })
@@ -232,22 +251,35 @@ async function handleRecording() {
   });
 }
 
-if (getLocation) {
-  getLocation.addEventListener("click", sendLocationToBackend);
+function attachEventListener(buttonElement, handlerFunction) {
+  if (buttonElement) {
+    buttonElement.addEventListener("click", handlerFunction);
+  }
 }
 
-if (askQuestion) {
-  askQuestion.addEventListener("click", ask);
-}
+attachEventListener(getLocation, () => fetchLocationData("./wikipedia"));
+attachEventListener(getRestaurants, () => fetchLocationData("./restaurant"));
+attachEventListener(getAccomodations, () =>
+  fetchLocationData("./accommodations")
+);
+attachEventListener(getCulturals, () => {
+  fetchLocationData("./culturals");
+});
+attachEventListener(getEvents, () => {
+  fetchLocationData("./events");
+});
+attachEventListener(askQuestion, () => {
+  ask();
+});
 
 if (muteButton) {
   muteButton.addEventListener("click", () => {
     if (audioElement.muted) {
       audioElement.muted = false;
-      muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-up"></i> Mute`;
+      muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-up"></i> Désactiver le son`;
     } else {
       audioElement.muted = true;
-      muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-mute"></i> Unmute`;
+      muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-mute"></i> Activer le son`;
     }
   });
 }

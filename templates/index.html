@@ -5,18 +5,21 @@ block content %}
 {% if is_admin %}
 <a href="./admin">Admin</a>
 {% endif %}
+
 <div class="row mt-3">
+  <!-- Bloc Audio Control -->
   <div class="col-md-4">
     <div class="mb-5 card shadow">
       <div class="card-body">
-        <h2 class="mb-3"><i class="bi bi-volume-up"></i> Audio Control</h2>
-        <div class="d-flex justify-content-between align-items-center">
-          <button class="btn btn-secondary" id="muteButton">
-            <i id="muteIcon" class="bi bi-volume-mute"></i> Unmute
-          </button>
-          <div class="d-flex flex-column">
-            <label for="volumeSlider">Volume</label
-            ><input
+        <h2 class="mb-3"><i class="bi bi-volume-up"></i> Contrôle Audio</h2>
+        <p>
+          Contrôlez le volume de l'audio généré par l'application. Activez ou
+          désactivez le son selon vos besoins.
+        </p>
+        <div class="d-flex flex-column">
+          <div class="d-flex flex-column mb-3">
+            <label for="volumeSlider">Volume</label>
+            <input
               type="range"
               id="volumeSlider"
               class="volume-control"
@@ -26,59 +29,139 @@ block content %}
               value="0.5"
             />
           </div>
+          <div>
+            <button class="btn btn-secondary" id="muteButton">
+              <i id="muteIcon" class="bi bi-volume-mute"></i> Activer le son
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Bloc Location Info -->
   <div class="col-md-4">
     <div class="mb-5 card shadow">
       <div class="card-body">
         <h2 class="mb-3">
-          <i class="bi bi-geo-alt"></i>
-          Location Info
+          <i class="bi bi-geo-alt"></i> Informations de Localisation
         </h2>
+        <p>
+          Obtenez des informations sur l'endroit où vous vous trouvez via
+          Wikipedia. Un résumé vous sera fourni par l'IA.
+        </p>
         <button class="btn btn-primary mb-3" id="getLocation">
-          Get Location Info
+          Obtenir les informations de localisation
         </button>
-        <div class="alert alert-info" id="location"></div>
       </div>
     </div>
   </div>
+
+  <!-- Bloc Restaurants -->
   <div class="col-md-4">
     <div class="mb-5 card shadow">
       <div class="card-body">
-        <h2 class="mb-3">
-          <i class="bi bi-mic"></i>
-          Transcribe Audio
-        </h2>
-        <button class="btn btn-danger" id="startRecording">
-          Start Recording
+        <h2 class="mb-3"><i class="bi bi-shop"></i> Restaurants</h2>
+        <p>
+          Découvrez les restaurants à proximité. L'IA générera une présentation
+          des options autour de vous.
+        </p>
+        <button class="btn btn-primary mb-3" id="getRestaurants">
+          Trouver des restaurants à proximité
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bloc Accomodations -->
+  <div class="col-md-4">
+    <div class="mb-5 card shadow">
+      <div class="card-body">
+        <h2 class="mb-3"><i class="bi bi-building"></i> Hébergements</h2>
+        <p>
+          Découvrez les hébergements à proximité. L'IA générera une présentation
+          des options autour de vous.
+        </p>
+        <button class="btn btn-primary mb-3" id="getAccomodations">
+          Trouver des hébergements à proximité
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bloc Culturals -->
+  <div class="col-md-4">
+    <div class="mb-5 card shadow">
+      <div class="card-body">
+        <h2 class="mb-3"><i class="bi bi-columns"></i> Lieux culturels</h2>
+        <p>
+          Découvrez les lieux culturels à proximité. L'IA générera une
+          présentation des options autour de vous.
+        </p>
+        <button class="btn btn-primary mb-3" id="getCulturals">
+          Trouver des lieux culturels à proximité
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bloc Events -->
+  <div class="col-md-4">
+    <div class="mb-5 card shadow">
+      <div class="card-body">
+        <h2 class="mb-3"><i class="bi bi-calendar"></i> Evénements</h2>
+        <p>
+          Découvrez les événements à proximité. L'IA générera une présentation
+          des options autour de vous.
+        </p>
+        <button class="btn btn-primary mb-3" id="getEvents">
+          Trouver des événements à proximité
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bloc Transcribe Audio -->
+  <div class="col-md-4">
+    <div class="mb-5 card shadow">
+      <div class="card-body">
+        <h2 class="mb-3"><i class="bi bi-mic"></i> Transcrire Audio</h2>
+        <p>
+          Enregistrez une demande vocale via le micro de votre appareil. Le
+          texte sera ensuite converti automatiquement.
+        </p>
+        <button class="btn btn-danger" id="startRecording">Commencer</button>
         <button class="btn btn-secondary" id="stopRecording" disabled>
-          Stop Recording
+          Arrêter
         </button>
-        <div class="alert alert-info mt-3" id="transcription"></div>
+        <div class="alert mt-3 d-none" id="transcription"></div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Bloc Ask a Question -->
 <div class="mb-5 card shadow">
   <div class="card-body">
     <h2 class="mb-3">
-      <i class="bi bi-question-circle"></i>
-      Ask a Question
+      <i class="bi bi-question-circle"></i> Poser une Question
     </h2>
+    <p>
+      Posez une question à l'IA en fonction du contexte (lieu actuel,
+      restaurants, etc.).
+    </p>
     <div class="input-group mb-3">
       <input
         type="text"
         id="questionInput"
         class="form-control"
-        placeholder="Ask a question about this place..."
+        placeholder="Posez une question sur cet endroit..."
       />
-      <button class="btn btn-success" id="askQuestion">Ask LLM</button>
+      <button class="btn btn-success" id="askQuestion">
+        Poser la question à l'IA
+      </button>
     </div>
-    <div class="alert alert-warning" id="llmResponse"></div>
+    <div class="alert alert-warning d-none" id="llmResponse"></div>
   </div>
 </div>
 {% endblock %}
