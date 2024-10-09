@@ -1,6 +1,7 @@
 import requests
 from dotenv import load_dotenv
 import os
+from datetime import datetime
 
 load_dotenv()
 
@@ -35,9 +36,11 @@ def get_agendas_by_region(region):
 
 def get_events_from_agenda(agenda_uid):
     url = f"https://api.openagenda.com/v2/agendas/{agenda_uid}/events"
+    current_date = datetime.now().isoformat()
     params = {
         "detailed": 1,
-        "relative[]": "upcoming",
+        "timings[gte]": current_date,
+        "size": 3,
         "key": os.environ.get("OPENAGENDA_API_KEY"),
     }
     verify = True if os.environ.get("VERIFY") == "True" else False
@@ -55,7 +58,7 @@ def get_nearby_events(latitude, longitude):
     if not agendas:
         return "Aucun événement trouvé."
     formatted_text = []
-    for agenda in agendas[:10]:
+    for agenda in agendas[:4]:
         agenda_uid = agenda["uid"]
         events = get_events_from_agenda(agenda_uid)
         if events:

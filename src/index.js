@@ -17,8 +17,26 @@ const llmResponse = document.getElementById("llmResponse");
 let autoScrollEnabled = true;
 let audioQueue = [];
 let isPlaying = false;
+let buttonStates = [];
 let audioElement = new Audio();
 audioElement.muted = true;
+
+function saveButtonStates() {
+  const buttons = document.querySelectorAll("button");
+  buttonStates = [];
+  buttons.forEach((button) => {
+    buttonStates.push({
+      element: button,
+      isDisabled: button.disabled,
+    });
+  });
+}
+
+function restoreButtonStates() {
+  buttonStates.forEach((state) => {
+    state.element.disabled = state.isDisabled;
+  });
+}
 
 function checkScrollPosition() {
   const nearBottom =
@@ -55,12 +73,13 @@ function getCurrentPosition() {
 
 async function fetchLocationData(url) {
   try {
+    saveButtonStates();
+    setButtonsDisabled(true);
+    document.getElementById("loadingSpinner").classList.remove("d-none");
     llmResponse.classList.add("d-none");
     questionInput.value = "";
-
     const position = await getCurrentPosition();
     const { latitude, longitude } = position.coords;
-
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -68,12 +87,14 @@ async function fetchLocationData(url) {
       },
       body: JSON.stringify({ latitude, longitude }),
     });
-
     if (parseInt(response.status) === 200) {
       await processStreamedResponse(response);
     }
   } catch (error) {
     console.error("Error getting location or fetching LLM data:", error);
+  } finally {
+    document.getElementById("loadingSpinner").classList.add("d-none");
+    restoreButtonStates();
   }
 }
 
@@ -123,6 +144,15 @@ function playAudio(audioElement) {
   });
 }
 
+function setButtonsDisabled(disabled) {
+  const buttons = document.querySelectorAll("button");
+  buttons.forEach((button) => {
+    if (button !== muteButton) {
+      button.disabled = disabled;
+    }
+  });
+}
+
 async function processStreamedResponse(response) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder("utf-8");
@@ -168,6 +198,9 @@ async function ask() {
   const question = questionInput.value;
   questionInput.value = "";
   llmResponse.classList.add("d-none");
+  saveButtonStates();
+  setButtonsDisabled(true);
+  document.getElementById("loadingSpinner").classList.remove("d-none");
   try {
     const response = await fetch("./llm", {
       method: "POST",
@@ -181,6 +214,9 @@ async function ask() {
     }
   } catch (error) {
     console.error("Error asking LLM:", error);
+  } finally {
+    document.getElementById("loadingSpinner").classList.add("d-none");
+    restoreButtonStates();
   }
 }
 

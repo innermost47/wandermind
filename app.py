@@ -195,7 +195,7 @@ def events():
 
     def generate():
         for chunk in query_llm(
-            "L'utilisateur veut davantage d'informations sur ces événements. Fournis-lui une description basée sur les données disponibles.",
+            "L'utilisateur souhaite obtenir plus de détails sur les événements suivants. Pour chaque événement, donne une description complète en incluant le titre, la date, le lieu, et une brève description de l'événement. Si disponible, précise également des informations supplémentaires telles que la durée, les horaires, et d'autres détails pertinents si ils sont fournis dans le contexte.",
             events,
             llm_lock,
             session_memory,
