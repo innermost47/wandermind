@@ -2,6 +2,13 @@ textarea {
   resize: none;
 }
 
+input,
+textarea {
+  background-color: #333 !important;
+  color: #fff !important;
+  border: 1px solid #444 !important;
+}
+
 #askQuestion {
   position: absolute;
   bottom: 2px;
