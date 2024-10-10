@@ -7,7 +7,8 @@ from markdown import markdown
 
 def strip_markdown(text):
     html = markdown(text)
-    return "".join(BeautifulSoup(html, features="html.parser").findAll(text=True))
+    cleaned = "".join(BeautifulSoup(html, features="html.parser").findAll(text=True))
+    return cleaned.replace("**", "")
 
 
 def text_to_speech(text, file_path):
