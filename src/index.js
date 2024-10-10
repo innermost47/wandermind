@@ -223,12 +223,14 @@ async function ask() {
 async function handleRecording() {
   let mediaRecorder;
   let audioChunks = [];
+  let stream;
 
   const start = () => {
     transcription.textContent = "";
     navigator.mediaDevices
       .getUserMedia({ audio: true })
-      .then((stream) => {
+      .then((audioStream) => {
+        stream = audioStream;
         mediaRecorder = new MediaRecorder(stream);
         mediaRecorder.start();
         mediaRecorder.ondataavailable = (event) => {
@@ -268,6 +270,7 @@ async function handleRecording() {
               transcription.classList.add("d-none");
             }, 3000);
           }
+          stream.getTracks().forEach((track) => track.stop());
         };
       })
       .catch((error) => {
@@ -287,44 +290,69 @@ async function handleRecording() {
   });
 }
 
-function attachEventListener(buttonElement, handlerFunction) {
-  if (buttonElement) {
-    buttonElement.addEventListener("click", handlerFunction);
+function adjustInput(questionInput) {
+  questionInput.style.height = "auto";
+  const maxHeight = 180;
+  const borderTopWidth = parseFloat(
+    window.getComputedStyle(questionInput).getPropertyValue("border-top-width")
+  );
+  const borderBottomWidth = parseFloat(
+    window
+      .getComputedStyle(questionInput)
+      .getPropertyValue("border-bottom-width")
+  );
+  const totalHeight =
+    questionInput.scrollHeight + borderTopWidth + borderBottomWidth;
+  if (totalHeight > maxHeight) {
+    questionInput.style.height = maxHeight + "px";
+    questionInput.style.overflowY = "scroll";
+  } else {
+    questionInput.style.height = totalHeight + "px";
+    questionInput.style.overflowY = "hidden";
   }
 }
 
-attachEventListener(getLocation, () => fetchLocationData("./wikipedia"));
-attachEventListener(getRestaurants, () => fetchLocationData("./restaurant"));
-attachEventListener(getAccomodations, () =>
+function attachEventListener(buttonElement, eventType, handlerFunction) {
+  if (buttonElement) {
+    buttonElement.addEventListener(eventType, handlerFunction);
+  }
+}
+
+attachEventListener(getLocation, "click", () =>
+  fetchLocationData("./wikipedia")
+);
+attachEventListener(getRestaurants, "click", () =>
+  fetchLocationData("./restaurant")
+);
+attachEventListener(getAccomodations, "click", () =>
   fetchLocationData("./accommodations")
 );
-attachEventListener(getCulturals, () => {
+attachEventListener(getCulturals, "click", () => {
   fetchLocationData("./culturals");
 });
-attachEventListener(getEvents, () => {
+attachEventListener(getEvents, "click", () => {
   fetchLocationData("./events");
 });
-attachEventListener(askQuestion, () => {
+attachEventListener(askQuestion, "click", () => {
   ask();
 });
+attachEventListener(questionInput, "input", () => {
+  adjustInput(questionInput);
+});
 
-if (muteButton) {
-  muteButton.addEventListener("click", () => {
-    if (audioElement.muted) {
-      audioElement.muted = false;
-      muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-up"></i> Désactiver le son`;
-    } else {
-      audioElement.muted = true;
-      muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-mute"></i> Activer le son`;
-    }
-  });
-}
+attachEventListener(muteButton, "click", () => {
+  if (audioElement.muted) {
+    audioElement.muted = false;
+    muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-up-fill text-success fs-2"></i>`;
+  } else {
+    audioElement.muted = true;
+    muteButton.innerHTML = `<i id="muteIcon" class="bi bi-volume-mute-fill text-danger fs-2"></i>`;
+  }
+});
 
-if (volumeSlider) {
-  volumeSlider.addEventListener("input", (event) => {
-    audioElement.volume = event.target.value;
-  });
-}
+attachEventListener(volumeSlider, "input", (event) => {
+  audioElement.volume = event.target.value;
+});
 
 if (startRecording && stopRecording) {
   handleRecording();

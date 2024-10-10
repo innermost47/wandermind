@@ -1,0 +1,32 @@
+textarea {
+  resize: none;
+}
+
+#askQuestion {
+  position: absolute;
+  bottom: 2px;
+  right: 0;
+  z-index: 1000;
+}
+
+button {
+  outline: none;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+button:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+button[disabled] {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}

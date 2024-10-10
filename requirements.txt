@@ -12,3 +12,5 @@ markdown
 bs4
 Flask-SQLAlchemy
 psycopg2
+Flask-Session 
+redis

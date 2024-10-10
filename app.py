@@ -9,6 +9,8 @@ from flask import (
     redirect,
     url_for,
 )
+from flask_session import Session
+from redis import Redis
 from services import (
     get_wikipedia_data,
     query_llm,
@@ -42,7 +44,12 @@ db.init_app(app)
 
 app.secret_key = os.environ.get("SECRET")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_prefix=1)
+app.config["SESSION_TYPE"] = "redis"
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_USE_SIGNER"] = True
+app.config["SESSION_REDIS"] = Redis(host="localhost", port=6379)
 
+Session(app)
 whisper_lock = Lock()
 llm_lock = Lock()
 

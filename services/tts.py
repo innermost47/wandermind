@@ -3,12 +3,15 @@ from uuid import uuid4
 import os
 from bs4 import BeautifulSoup
 from markdown import markdown
+import re
 
 
 def strip_markdown(text):
     html = markdown(text)
     cleaned = "".join(BeautifulSoup(html, features="html.parser").findAll(text=True))
-    return cleaned.replace("**", "")
+    cleaned = re.sub(r"[*_~`#>\[\]\\|]", "", cleaned)
+    cleaned = re.sub(r"[-+]", "", cleaned)
+    return cleaned
 
 
 def text_to_speech(text, file_path):

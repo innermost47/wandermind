@@ -16,24 +16,14 @@ block content %}
           Contrôlez le volume de l'audio généré par l'application. Activez ou
           désactivez le son selon vos besoins.
         </p>
-        <div class="d-flex flex-column">
-          <div class="d-flex flex-column mb-3">
-            <label for="volumeSlider">Volume</label>
-            <input
-              type="range"
-              id="volumeSlider"
-              class="volume-control"
-              min="0"
-              max="1"
-              step="0.01"
-              value="0.5"
-            />
-          </div>
-          <div>
-            <button class="btn btn-secondary" id="muteButton">
-              <i id="muteIcon" class="bi bi-volume-mute"></i> Activer le son
-            </button>
-          </div>
+        <hr />
+        <div class="d-flex align-items-center">
+          <button class="btn" id="muteButton">
+            <i class="bi bi-volume-mute-fill text-danger fs-2"></i>
+          </button>
+          <span class="ms-2 text-muted" style="font-style: italic"
+            >Cliquez pour activer/désactiver le son</span
+          >
         </div>
       </div>
     </div>
@@ -50,9 +40,15 @@ block content %}
           Obtenez des informations sur l'endroit où vous vous trouvez via
           Wikipedia. Un résumé vous sera fourni par l'IA.
         </p>
-        <button class="btn btn-primary mb-3" id="getLocation">
-          Obtenir les informations de localisation
-        </button>
+        <hr />
+        <div class="d-flex align-items-center">
+          <button class="btn" id="getLocation">
+            <i class="bi bi-map-fill text-primary fs-4"></i>
+          </button>
+          <span class="ms-2 text-muted" style="font-style: italic"
+            >Cliquez pour obtenir les informations de localisation</span
+          >
+        </div>
       </div>
     </div>
   </div>
@@ -66,14 +62,20 @@ block content %}
           Découvrez les restaurants à proximité. L'IA générera une présentation
           des options autour de vous.
         </p>
-        <button class="btn btn-primary mb-3" id="getRestaurants">
-          Trouver des restaurants à proximité
-        </button>
+        <hr />
+        <div class="d-flex align-items-center">
+          <button class="btn" id="getRestaurants">
+            <i class="bi bi-geo-fill text-primary fs-4"></i>
+          </button>
+          <span class="ms-2 text-muted" style="font-style: italic"
+            >Cliquez pour trouver des restaurants à proximité</span
+          >
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Bloc Accomodations -->
+  <!-- Bloc Accommodations -->
   <div class="col-md-4">
     <div class="mb-5 card shadow">
       <div class="card-body">
@@ -82,9 +84,15 @@ block content %}
           Découvrez les hébergements à proximité. L'IA générera une présentation
           des options autour de vous.
         </p>
-        <button class="btn btn-primary mb-3" id="getAccomodations">
-          Trouver des hébergements à proximité
-        </button>
+        <hr />
+        <div class="d-flex align-items-center">
+          <button class="btn" id="getAccommodations">
+            <i class="bi bi-house-fill text-primary fs-4"></i>
+          </button>
+          <span class="ms-2 text-muted" style="font-style: italic"
+            >Cliquez pour trouver des hébergements à proximité</span
+          >
+        </div>
       </div>
     </div>
   </div>
@@ -98,9 +106,15 @@ block content %}
           Découvrez les lieux culturels à proximité. L'IA générera une
           présentation des options autour de vous.
         </p>
-        <button class="btn btn-primary mb-3" id="getCulturals">
-          Trouver des lieux culturels à proximité
-        </button>
+        <hr />
+        <div class="d-flex align-items-center">
+          <button class="btn" id="getCulturals">
+            <i class="bi bi-collection-fill text-primary fs-4"></i>
+          </button>
+          <span class="ms-2 text-muted" style="font-style: italic"
+            >Cliquez pour découvrir des lieux culturels à proximité</span
+          >
+        </div>
       </div>
     </div>
   </div>
@@ -109,14 +123,20 @@ block content %}
   <div class="col-md-4">
     <div class="mb-5 card shadow">
       <div class="card-body">
-        <h2 class="mb-3"><i class="bi bi-calendar"></i> Evénements</h2>
+        <h2 class="mb-3"><i class="bi bi-calendar"></i> Événements</h2>
         <p>
           Découvrez les événements à proximité. L'IA générera une présentation
           des options autour de vous.
         </p>
-        <button class="btn btn-primary mb-3" id="getEvents">
-          Trouver des événements à proximité
-        </button>
+        <hr />
+        <div class="d-flex align-items-center">
+          <button class="btn" id="getEvents">
+            <i class="bi bi-calendar-event-fill text-primary fs-4"></i>
+          </button>
+          <span class="ms-2 text-muted" style="font-style: italic"
+            >Cliquez pour découvrir les événements proches de vous</span
+          >
+        </div>
       </div>
     </div>
   </div>
@@ -130,40 +150,58 @@ block content %}
           Enregistrez une demande vocale via le micro de votre appareil. Le
           texte sera ensuite converti automatiquement.
         </p>
-        <button class="btn btn-danger" id="startRecording">Commencer</button>
-        <button class="btn btn-secondary" id="stopRecording" disabled>
-          Arrêter
-        </button>
+        <hr />
+        <div class="d-flex align-items-center">
+          <button class="btn" id="startRecording">
+            <i class="bi bi-record-circle-fill text-danger fs-4"></i>
+          </button>
+          <span class="ms-2 text-muted" style="font-style: italic"
+            >Cliquez pour commencer l'enregistrement</span
+          >
+        </div>
+        <div class="d-flex align-items-center">
+          <button class="btn" id="stopRecording" disabled>
+            <i class="bi bi-stop-circle-fill text-dark fs-4"></i>
+          </button>
+          <span class="ms-2 text-muted" style="font-style: italic"
+            >Cliquez pour arrêter l'enregistrement</span
+          >
+        </div>
         <div class="alert mt-3 d-none" id="transcription"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-12">
+    <!-- Bloc Ask a Question -->
+    <div class="mb-5 card shadow">
+      <div class="card-body">
+        <h2 class="mb-3">
+          <i class="bi bi-question-circle"></i> Poser une Question
+        </h2>
+        <p>
+          Posez une question à l'IA en fonction du contexte (lieu actuel,
+          restaurants, etc.).
+        </p>
+        <div class="input-group mb-3">
+          <textarea
+            class="form-control p-2 rounded pe-5"
+            id="questionInput"
+            name="questionInput"
+            placeholder="Posez une question sur cet endroit..."
+            required
+            rows="1"
+          ></textarea>
+          <button class="btn" id="askQuestion">
+            <i class="bi bi-send-fill text-success fs-5"></i>
+          </button>
+        </div>
+        <div class="alert alert-warning d-none" id="llmResponse"></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Bloc Ask a Question -->
-<div class="mb-5 card shadow">
-  <div class="card-body">
-    <h2 class="mb-3">
-      <i class="bi bi-question-circle"></i> Poser une Question
-    </h2>
-    <p>
-      Posez une question à l'IA en fonction du contexte (lieu actuel,
-      restaurants, etc.).
-    </p>
-    <div class="input-group mb-3">
-      <input
-        type="text"
-        id="questionInput"
-        class="form-control"
-        placeholder="Posez une question sur cet endroit..."
-      />
-      <button class="btn btn-success" id="askQuestion">
-        Poser la question à l'IA
-      </button>
-    </div>
-    <div class="alert alert-warning d-none" id="llmResponse"></div>
-  </div>
-</div>
 <div
   id="loadingSpinner"
   class="spinner-border text-primary position-fixed top-0 end-0 m-3 d-none"

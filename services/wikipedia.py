@@ -38,5 +38,13 @@ def get_wikipedia_page(page_id):
     response = requests.get(url, params=params, verify=verify)
     if response.status_code == 200:
         page = response.json()
-        return page["query"]["pages"][str(page_id)]["extract"]
+        content = page["query"]["pages"][str(page_id)]["extract"]
+
+        sections_to_remove = ["Notes et références", "Voir aussi", "Liens externes"]
+
+        for section in sections_to_remove:
+            if section in content:
+                content = content.split(section)[0]
+
+        return content
     return None
