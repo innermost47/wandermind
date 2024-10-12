@@ -13,12 +13,15 @@ const getCulturals = document.getElementById("getCulturals");
 const askQuestion = document.getElementById("askQuestion");
 const questionInput = document.getElementById("questionInput");
 const llmResponse = document.getElementById("llmResponse");
+const stopGeneration = document.getElementById("stopGeneration");
 
+let controller;
 let autoScrollEnabled = true;
 let audioQueue = [];
 let isPlaying = false;
 let buttonStates = [];
 let audioElement = new Audio();
+
 audioElement.muted = true;
 
 function saveButtonStates() {
@@ -77,10 +80,14 @@ async function fetchLocationData(url) {
     setButtonsDisabled(true);
     document.getElementById("loadingSpinner").classList.remove("d-none");
     llmResponse.classList.add("d-none");
+    stopGeneration.classList.remove("d-none");
     questionInput.value = "";
     const position = await getCurrentPosition();
     const { latitude, longitude } = position.coords;
+    controller = new AbortController();
+    const signal = controller.signal;
     const response = await fetch(url, {
+      signal: signal,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -95,6 +102,7 @@ async function fetchLocationData(url) {
   } finally {
     document.getElementById("loadingSpinner").classList.add("d-none");
     restoreButtonStates();
+    stopGeneration.classList.add("d-none");
   }
 }
 
@@ -201,8 +209,12 @@ async function ask() {
   saveButtonStates();
   setButtonsDisabled(true);
   document.getElementById("loadingSpinner").classList.remove("d-none");
+  stopGeneration.classList.remove("d-none");
+  controller = new AbortController();
+  const signal = controller.signal;
   try {
     const response = await fetch("./llm", {
+      signal: signal,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -216,6 +228,7 @@ async function ask() {
     console.error("Error asking LLM:", error);
   } finally {
     document.getElementById("loadingSpinner").classList.add("d-none");
+    stopGeneration.classList.add("d-none");
     restoreButtonStates();
   }
 }
@@ -338,6 +351,11 @@ attachEventListener(askQuestion, "click", () => {
 });
 attachEventListener(questionInput, "input", () => {
   adjustInput(questionInput);
+});
+attachEventListener(stopGeneration, "click", () => {
+  controller.abort();
+  audioElement.pause();
+  audioElement.currentTime = 0;
 });
 
 attachEventListener(muteButton, "click", () => {
