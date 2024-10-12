@@ -14,8 +14,9 @@ const askQuestion = document.getElementById("askQuestion");
 const questionInput = document.getElementById("questionInput");
 const llmResponse = document.getElementById("llmResponse");
 const stopGeneration = document.getElementById("stopGeneration");
+const loadingSpinner = document.getElementById("loadingSpinner");
 
-let controller;
+let controller = new AbortController();
 let autoScrollEnabled = true;
 let audioQueue = [];
 let isPlaying = false;
@@ -78,9 +79,10 @@ async function fetchLocationData(url) {
   try {
     saveButtonStates();
     setButtonsDisabled(true);
-    document.getElementById("loadingSpinner").classList.remove("d-none");
+    loadingSpinner.classList.remove("d-none");
     llmResponse.classList.add("d-none");
-    stopGeneration.classList.remove("d-none");
+    loadingSpinner.classList.add("text-primary");
+    loadingSpinner.classList.remove("text-danger");
     questionInput.value = "";
     const position = await getCurrentPosition();
     const { latitude, longitude } = position.coords;
@@ -100,7 +102,7 @@ async function fetchLocationData(url) {
   } catch (error) {
     console.error("Error getting location or fetching LLM data:", error);
   } finally {
-    document.getElementById("loadingSpinner").classList.add("d-none");
+    loadingSpinner.classList.add("d-none");
     restoreButtonStates();
     stopGeneration.classList.add("d-none");
   }
@@ -155,7 +157,7 @@ function playAudio(audioElement) {
 function setButtonsDisabled(disabled) {
   const buttons = document.querySelectorAll("button");
   buttons.forEach((button) => {
-    if (button !== muteButton) {
+    if (button !== muteButton && button != stopGeneration) {
       button.disabled = disabled;
     }
   });
@@ -165,6 +167,7 @@ async function processStreamedResponse(response) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder("utf-8");
   let result = "";
+  stopGeneration.classList.remove("d-none");
   llmResponse.classList.remove("d-none");
   llmResponse.textContent = "";
   const renderer = smd.default_renderer(llmResponse);
@@ -208,8 +211,9 @@ async function ask() {
   llmResponse.classList.add("d-none");
   saveButtonStates();
   setButtonsDisabled(true);
-  document.getElementById("loadingSpinner").classList.remove("d-none");
-  stopGeneration.classList.remove("d-none");
+  loadingSpinner.classList.remove("d-none");
+  loadingSpinner.classList.add("text-primary");
+  loadingSpinner.classList.remove("text-danger");
   controller = new AbortController();
   const signal = controller.signal;
   try {
@@ -227,7 +231,7 @@ async function ask() {
   } catch (error) {
     console.error("Error asking LLM:", error);
   } finally {
-    document.getElementById("loadingSpinner").classList.add("d-none");
+    loadingSpinner.classList.add("d-none");
     stopGeneration.classList.add("d-none");
     restoreButtonStates();
   }
@@ -356,6 +360,8 @@ attachEventListener(stopGeneration, "click", () => {
   controller.abort();
   audioElement.pause();
   audioElement.currentTime = 0;
+  loadingSpinner.classList.remove("text-primary");
+  loadingSpinner.classList.add("text-danger");
 });
 
 attachEventListener(muteButton, "click", () => {
