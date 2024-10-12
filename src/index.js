@@ -75,8 +75,18 @@ function getCurrentPosition() {
   });
 }
 
+function prepareNewRequest() {
+  if (audioElement) {
+    audioElement.pause();
+    audioElement.currentTime = 0;
+  }
+  audioQueue = [];
+  isPlaying = false;
+}
+
 async function fetchLocationData(url) {
   try {
+    prepareNewRequest();
     saveButtonStates();
     setButtonsDisabled(true);
     loadingSpinner.classList.remove("d-none");
@@ -148,6 +158,7 @@ async function playNextAudio() {
 
 function playAudio(audioElement) {
   return new Promise((resolve, reject) => {
+    audioElement.playbackRate = 1.2;
     audioElement.play();
     audioElement.onended = resolve;
     audioElement.onerror = reject;
@@ -206,6 +217,7 @@ function renderMarkdown(parser, text) {
 }
 
 async function ask() {
+  prepareNewRequest();
   const question = questionInput.value;
   questionInput.value = "";
   llmResponse.classList.add("d-none");
@@ -357,11 +369,15 @@ attachEventListener(questionInput, "input", () => {
   adjustInput(questionInput);
 });
 attachEventListener(stopGeneration, "click", () => {
-  controller.abort();
-  audioElement.pause();
-  audioElement.currentTime = 0;
-  loadingSpinner.classList.remove("text-primary");
-  loadingSpinner.classList.add("text-danger");
+  if (controller) {
+    controller.abort();
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+    }
+    loadingSpinner.classList.remove("text-primary");
+    loadingSpinner.classList.add("text-danger");
+  }
 });
 
 attachEventListener(muteButton, "click", () => {
