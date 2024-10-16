@@ -1,42 +1,36 @@
-import requests
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
+import httpx
+from config import VERIFY, API_KEYS
 
 
-def get_foursquare_data(latitude, longitude, radius=1000, query=None, category=None):
+async def get_foursquare_data(
+    latitude, longitude, radius=1000, query=None, category=None
+):
     url = "https://api.foursquare.com/v3/places/search"
-
     params = {
         "ll": f"{latitude},{longitude}",
         "radius": radius,
         "limit": 10,
     }
-
     if query:
         params["query"] = query
     if category:
         params["categories"] = category
-
-    headers = {"Authorization": os.environ.get("FOURSQUARE_API_KEY")}
-    verify = True if os.environ.get("VERIFY") == "True" else False
-    response = requests.get(url, params=params, headers=headers, verify=verify)
-
-    if response.status_code == 200:
-        items = response.json().get("results", [])
-        formatted_text = []
-        if items:
-            for item in items:
-                formatted_text.append(format_for_llm(item))
-
-        if formatted_text:
-            return "\n".join(formatted_text)
+    headers = {"Authorization": API_KEYS["FOURSQUARE"]}
+    async with httpx.AsyncClient(verify=VERIFY) as client:
+        response = await client.get(url, params=params, headers=headers)
+        if response.status_code == 200:
+            items = response.json().get("results", [])
+            formatted_text = []
+            if items:
+                for item in items:
+                    formatted_text.append(format_for_llm(item))
+            if formatted_text:
+                return "\n".join(formatted_text)
+            else:
+                return f"No places were found nearby."
         else:
-            return f"No places were found nearby."
-    else:
-        print(f"Error while making Foursquare request: {response.status_code}")
-        return None
+            print(f"Error while making Foursquare request: {response.status_code}")
+            return None
 
 
 def format_for_llm(item):
