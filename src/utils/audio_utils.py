@@ -20,15 +20,19 @@ def strip_markdown(text):
 
 
 def text_to_speech_sync(text: str):
-    if not text or not text.strip():
+    try:
+        if not text or not text.strip():
+            return None
+        plain_text = strip_markdown(text)
+        tts = gTTS(text=plain_text, lang="fr")
+        audio_buffer = BytesIO()
+        tts.write_to_fp(audio_buffer)
+        audio_buffer.seek(0)
+        audio_base64 = base64.b64encode(audio_buffer.getvalue()).decode("utf-8")
+        return audio_base64
+    except Exception as e:
+        print(f"An error occured while trying to convert text to speech: {e}")
         return None
-    plain_text = strip_markdown(text)
-    tts = gTTS(text=plain_text, lang="fr")
-    audio_buffer = BytesIO()
-    tts.write_to_fp(audio_buffer)
-    audio_buffer.seek(0)
-    audio_base64 = base64.b64encode(audio_buffer.getvalue()).decode("utf-8")
-    return audio_base64
 
 
 async def text_to_speech_to_memory(text):
