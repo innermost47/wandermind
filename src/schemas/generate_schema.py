@@ -3,8 +3,8 @@ from typing import Optional, List
 
 
 class GenerateSchema(BaseModel):
-    latitude: Optional[str] = None
-    longitude: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     query: Optional[str] = None
     memory: Optional[List[dict]] = None
     category: Optional[str] = None

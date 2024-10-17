@@ -15,7 +15,7 @@ class GenerationService:
     def __init__(self):
         self.llm_utils = LLMUtils()
 
-    async def handle_place_request(
+    async def generate(
         self,
         generate_schema: GenerateSchema,
     ):

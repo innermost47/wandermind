@@ -1,4 +1,4 @@
-from .tts_utils import text_to_speech_to_file
+from .audio_utils import text_to_speech_to_memory
 from config import LOCKS, LLM_MODEL, N_CTX_SIZE, N_GPU_LAYERS
 from typing import List
 from llama_cpp import Llama
@@ -56,15 +56,22 @@ class LLMUtils:
             for chunk in output:
                 delta = chunk["choices"][0]["delta"]
                 if "content" in delta:
-                    yield {"text": delta["content"], "audio": None}
+                    yield {"text": delta["content"], "audio": None, "context": None}
                     buffer += delta["content"]
                     content += delta["content"]
 
-                    if any(char in ".,;?!:" for char in delta["content"]):
-                        audio_file_path = await text_to_speech_to_file(buffer)
+                    if len(buffer) >= 100 or any(
+                        char in ".,;?!:" for char in delta["content"]
+                    ):
+                        audio_buffer = await text_to_speech_to_memory(buffer)
                         buffer = ""
-                        yield {"text": None, "audio": audio_file_path}
+                        yield {
+                            "text": None,
+                            "audio": audio_buffer,
+                            "context": None,
+                        }
 
             if buffer.strip():
-                audio_file_path = await text_to_speech_to_file(buffer)
-                yield {"text": None, "audio": audio_file_path}
+                audio_buffer = await text_to_speech_to_memory(buffer)
+                yield {"text": None, "audio": audio_buffer, "context": None}
+            yield {"text": None, "audio": None, "context": context}

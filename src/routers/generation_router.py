@@ -4,6 +4,8 @@ from src.database import get_db
 from .base_router import BaseRouter
 from src.services import GenerationService
 from src.schemas import GenerateSchema
+from src.models import User
+from src.security import get_current_user
 
 
 class GenerationRouter(BaseRouter):
@@ -13,6 +15,9 @@ class GenerationRouter(BaseRouter):
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
 
     async def generate(
-        self, generate_schema: GenerateSchema, db: Session = Depends(get_db)
+        self,
+        generate_schema: GenerateSchema,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
     ):
-        return await self._service.handle_place_request(generate_schema=generate_schema)
+        return await self._service.generate(generate_schema=generate_schema)

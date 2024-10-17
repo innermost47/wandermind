@@ -1,4 +1,5 @@
-import * as smd from "streaming-markdown";
+import * as smd from "./smd.js";
+import { apiUrl, categories } from "./config.js";
 
 const muteButton = document.getElementById("muteButton");
 const volumeSlider = document.getElementById("volumeSlider");
@@ -15,6 +16,7 @@ const questionInput = document.getElementById("questionInput");
 const llmResponse = document.getElementById("llmResponse");
 const stopGeneration = document.getElementById("stopGeneration");
 const loadingSpinner = document.getElementById("loadingSpinner");
+const apiKey = document.getElementById("apiKey");
 
 let controller = new AbortController();
 let autoScrollEnabled = true;
@@ -84,30 +86,38 @@ function prepareNewRequest() {
   isPlaying = false;
 }
 
-async function fetchLocationData(url) {
+async function fetchLocationData(category = null, query = null) {
   try {
-    prepareNewRequest();
-    saveButtonStates();
-    setButtonsDisabled(true);
-    loadingSpinner.classList.remove("d-none");
-    llmResponse.classList.add("d-none");
-    loadingSpinner.classList.add("text-primary");
-    loadingSpinner.classList.remove("text-danger");
-    questionInput.value = "";
-    const position = await getCurrentPosition();
-    const { latitude, longitude } = position.coords;
-    controller = new AbortController();
-    const signal = controller.signal;
-    const response = await fetch(url, {
-      signal: signal,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ latitude, longitude }),
-    });
-    if (parseInt(response.status) === 200) {
-      await processStreamedResponse(response);
+    if (apiKey.value !== "") {
+      prepareNewRequest();
+      saveButtonStates();
+      setButtonsDisabled(true);
+      loadingSpinner.classList.remove("d-none");
+      llmResponse.classList.add("d-none");
+      loadingSpinner.classList.add("text-primary");
+      loadingSpinner.classList.remove("text-danger");
+      questionInput.value = "";
+      const position = await getCurrentPosition();
+      const { latitude, longitude } = position.coords;
+      controller = new AbortController();
+      const signal = controller.signal;
+      const response = await fetch(apiUrl + "/generate", {
+        signal: signal,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + apiKey.value,
+        },
+        body: JSON.stringify({
+          latitude: latitude,
+          longitude: longitude,
+          category: category,
+          query: query,
+        }),
+      });
+      if (parseInt(response.status) === 200) {
+        await processStreamedResponse(response);
+      }
     }
   } catch (error) {
     console.error("Error getting location or fetching LLM data:", error);
@@ -118,24 +128,14 @@ async function fetchLocationData(url) {
   }
 }
 
-function deleteAudio(audioPath) {
-  fetch("./delete_audio", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ audio_path: audioPath }),
-  })
-    .then((response) => {
-      if (response.ok) {
-        console.log("Audio file deleted successfully");
-      } else {
-        console.error("Failed to delete audio file");
-      }
-    })
-    .catch((error) => {
-      console.error("Error deleting audio file:", error);
-    });
+function base64ToBlob(base64, contentType) {
+  const byteCharacters = atob(base64);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: contentType });
 }
 
 async function playNextAudio() {
@@ -144,11 +144,12 @@ async function playNextAudio() {
     return;
   }
   isPlaying = true;
-  const nextAudio = audioQueue.shift();
-  audioElement.src = nextAudio;
+  const nextAudioBase64 = audioQueue.shift();
+  const audioBlob = base64ToBlob(nextAudioBase64, "audio/mpeg");
+  const audioUrl = URL.createObjectURL(audioBlob);
+  audioElement.src = audioUrl;
   try {
     await playAudio(audioElement);
-    deleteAudio(audioElement.src);
     playNextAudio();
   } catch (error) {
     console.error("Error playing audio:", error);
@@ -183,7 +184,6 @@ async function processStreamedResponse(response) {
   llmResponse.textContent = "";
   const renderer = smd.default_renderer(llmResponse);
   const parser = smd.parser(renderer);
-
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -203,6 +203,9 @@ async function processStreamedResponse(response) {
             playNextAudio();
           }
         }
+        if (json.context) {
+          localStorage.setItem("context", json.context);
+        }
       } catch (error) {
         console.error("Erreur lors du parsing JSON :", error);
       }
@@ -216,29 +219,35 @@ function renderMarkdown(parser, text) {
   scrollToBottom();
 }
 
-async function ask() {
-  prepareNewRequest();
-  const question = questionInput.value;
-  questionInput.value = "";
-  llmResponse.classList.add("d-none");
-  saveButtonStates();
-  setButtonsDisabled(true);
-  loadingSpinner.classList.remove("d-none");
-  loadingSpinner.classList.add("text-primary");
-  loadingSpinner.classList.remove("text-danger");
-  controller = new AbortController();
-  const signal = controller.signal;
+async function generate() {
   try {
-    const response = await fetch("./llm", {
-      signal: signal,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ question }),
-    });
-    if (parseInt(response.status) === 200) {
-      await processStreamedResponse(response);
+    if (apiKey.value !== "" && localStorage.getItem("context")) {
+      prepareNewRequest();
+      const question = questionInput.value;
+      questionInput.value = "";
+      llmResponse.classList.add("d-none");
+      saveButtonStates();
+      setButtonsDisabled(true);
+      loadingSpinner.classList.remove("d-none");
+      loadingSpinner.classList.add("text-primary");
+      loadingSpinner.classList.remove("text-danger");
+      controller = new AbortController();
+      const signal = controller.signal;
+      const response = await fetch(apiUrl + "/generate", {
+        signal: signal,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + apiKey.value,
+        },
+        body: JSON.stringify({
+          prompt: question,
+          context: localStorage.getItem("context"),
+        }),
+      });
+      if (parseInt(response.status) === 200) {
+        await processStreamedResponse(response);
+      }
     }
   } catch (error) {
     console.error("Error asking LLM:", error);
@@ -250,78 +259,81 @@ async function ask() {
 }
 
 async function handleRecording() {
-  let mediaRecorder;
-  let audioChunks = [];
-  let stream;
-
-  const start = () => {
-    transcription.textContent = "";
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then((audioStream) => {
-        stream = audioStream;
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
-        mediaRecorder.ondataavailable = (event) => {
-          audioChunks.push(event.data);
-        };
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-          audioChunks = [];
-          const formData = new FormData();
-          formData.append("file", audioBlob, "audio.webm");
-          transcription.classList.remove("d-none");
-          transcription.classList.remove("alert-danger");
-          transcription.classList.remove("alert-success");
-          transcription.classList.add("alert-info");
-          transcription.textContent = "Transcription en cours...";
-          try {
-            const response = await fetch("./transcribe", {
-              method: "POST",
-              body: formData,
-            });
-            if (response.status >= 300) {
-              transcription.classList.remove("alert-info");
-              transcription.classList.add("alert-danger");
+  if (apiKey.value !== "") {
+    let mediaRecorder;
+    let audioChunks = [];
+    let stream;
+    const start = () => {
+      transcription.textContent = "";
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((audioStream) => {
+          stream = audioStream;
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.start();
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+            audioChunks = [];
+            const formData = new FormData();
+            formData.append("file", audioBlob, "audio.webm");
+            transcription.classList.remove("d-none");
+            transcription.classList.remove("alert-danger");
+            transcription.classList.remove("alert-success");
+            transcription.classList.add("alert-info");
+            transcription.textContent = "Transcription en cours...";
+            try {
+              const response = await fetch("./transcribe", {
+                method: "POST",
+                body: formData,
+                Authorization: "Bearer " + apiKey.value,
+              });
+              if (response.status >= 300) {
+                transcription.classList.remove("alert-info");
+                transcription.classList.add("alert-danger");
+                transcription.textContent = "Erreur lors de la transcription.";
+              } else {
+                const data = await response.json();
+                transcription.classList.remove("alert-info");
+                transcription.classList.add("alert-success");
+                transcription.textContent =
+                  "Transcription réalisée avec succès.";
+                questionInput.value = data.transcription;
+              }
+            } catch (error) {
+              console.error("Error transcribing audio:", error);
               transcription.textContent = "Erreur lors de la transcription.";
-            } else {
-              const data = await response.json();
-              transcription.classList.remove("alert-info");
-              transcription.classList.add("alert-success");
-              transcription.textContent = "Transcription réalisée avec succès.";
-              questionInput.value = data.transcription;
+            } finally {
+              setTimeout(() => {
+                transcription.classList.add("d-none");
+              }, 3000);
             }
-          } catch (error) {
-            console.error("Error transcribing audio:", error);
-            transcription.textContent = "Erreur lors de la transcription.";
-          } finally {
-            setTimeout(() => {
-              transcription.classList.add("d-none");
-            }, 3000);
-          }
-          stream.getTracks().forEach((track) => track.stop());
-        };
-      })
-      .catch((error) => {
-        console.error("Error accessing audio stream:", error);
-      });
-  };
+            stream.getTracks().forEach((track) => track.stop());
+          };
+        })
+        .catch((error) => {
+          console.error("Error accessing audio stream:", error);
+        });
+    };
 
-  startRecording.addEventListener("click", () => {
-    startRecording.disabled = true;
-    stopRecording.disabled = false;
-    start();
-  });
-  stopRecording.addEventListener("click", () => {
-    mediaRecorder.stop();
-    startRecording.disabled = false;
-    stopRecording.disabled = true;
-  });
+    startRecording.addEventListener("click", () => {
+      startRecording.disabled = true;
+      stopRecording.disabled = false;
+      start();
+    });
+    stopRecording.addEventListener("click", () => {
+      mediaRecorder.stop();
+      startRecording.disabled = false;
+      stopRecording.disabled = true;
+    });
+  }
 }
 
 function adjustInput(questionInput) {
   questionInput.style.height = "auto";
-  const maxHeight = 180;
+  const maxHeight = 10;
   const borderTopWidth = parseFloat(
     window.getComputedStyle(questionInput).getPropertyValue("border-top-width")
   );
@@ -348,22 +360,22 @@ function attachEventListener(buttonElement, eventType, handlerFunction) {
 }
 
 attachEventListener(getLocation, "click", () =>
-  fetchLocationData("./wikipedia")
+  fetchLocationData(categories.wikipedia)
 );
 attachEventListener(getRestaurants, "click", () =>
-  fetchLocationData("./restaurant")
+  fetchLocationData(null, categories.restaurants)
 );
 attachEventListener(getAccomodations, "click", () =>
-  fetchLocationData("./accommodations")
+  fetchLocationData(categories.accomodations)
 );
 attachEventListener(getCulturals, "click", () => {
-  fetchLocationData("./culturals");
+  fetchLocationData(categories.culturals);
 });
 attachEventListener(getEvents, "click", () => {
-  fetchLocationData("./events");
+  fetchLocationData(categories.events);
 });
 attachEventListener(askQuestion, "click", () => {
-  ask();
+  generate();
 });
 attachEventListener(questionInput, "input", () => {
   adjustInput(questionInput);

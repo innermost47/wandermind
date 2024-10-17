@@ -3,6 +3,7 @@ from email.message import EmailMessage
 from email.utils import formataddr
 from dotenv import load_dotenv
 import aiosmtplib
+from config import ENVIRONMENT
 
 load_dotenv()
 
@@ -22,7 +23,7 @@ async def send_email(recipient, subject, content):
             msg,
             hostname=os.environ.get("SMTP_SERVER"),
             port=int(os.environ.get("SMTP_SERVER_PORT")),
-            start_tls=True,
+            start_tls=True if ENVIRONMENT == "production" else False,
             username=os.environ.get("SMTP_USERNAME"),
             password=os.environ.get("SMTP_PASSWORD"),
         )
@@ -34,16 +35,16 @@ async def send_email(recipient, subject, content):
         raise e
 
 
-def get_email_for_account_creation(token_clear, token_expiry_days):
-    subject = "Votre token d'identification"
+def get_email_for_account_creation(api_key, api_key_expiry_days=30):
+    subject = "Votre clé d'API"
     email_body = f"""
     Bonjour,
 
-    Votre compte a été créé avec succès. Voici votre token d'identification personnel, à ne pas perdre, car il est nécessaire pour vous connecter :
+    Votre compte a été créé avec succès. Voici votre clé d'api personnelle, à ne pas perdre, car elle est nécessaire pour vous connecter :
 
-    Token : {token_clear}
+    Clé d'API : {api_key}
 
-    Ce token a une durée de validité de {token_expiry_days} jours. Assurez-vous de le conserver en sécurité.
+    Cette clé d'API a une durée de validité de {api_key_expiry_days} jours. Assurez-vous de la conserver en sécurité.
 
     Si vous avez des questions ou besoin d'assistance, n'hésitez pas à me contacter.
 

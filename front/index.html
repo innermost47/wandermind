@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WanderMind - The world with AI</title>
+    <link rel="shortcut icon" href="img/logo.png" type="image/x-icon" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.3/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <meta
+      name="description"
+      content="WanderMind is an innovative app that reinvents tourist exploration through artificial intelligence. Whether you are looking for historical sites, local activities or hidden restaurants, our interactive AI guides you through immersive and personalized experiences. Get real-time information about each destination, ask your virtual assistant questions and be surprised by recommendations tailored to your tastes. With WanderMind, every trip becomes a tailor-made adventure."
+    />
+  </head>
+  <body data-bs-theme="dark">
+    <div class="container py-5">
+      <h1 class="mb-5 text-center">WanderMind</h1>
+      <div class="mt-3">
+        <input
+          type="password"
+          name="apiKey"
+          id="apiKey"
+          placeholder="Votre clé d'API"
+          class="form-control"
+        />
+      </div>
+      <div class="row mt-3">
+        <!-- Bloc Audio Control -->
+        <div class="col-md-4">
+          <div class="mb-5 card shadow">
+            <div class="card-body">
+              <h2 class="mb-3">
+                <i class="bi bi-volume-up"></i> Contrôle Audio
+              </h2>
+              <p>
+                Contrôlez le volume de l'audio généré par l'application. Activez
+                ou désactivez le son selon vos besoins.
+              </p>
+              <hr />
+              <div class="d-flex align-items-center">
+                <button class="btn" id="muteButton">
+                  <i class="bi bi-volume-mute-fill text-danger fs-2"></i>
+                </button>
+                <span class="ms-2 text-muted" style="font-style: italic"
+                  >Cliquez pour activer/désactiver le son</span
+                >
+              </div>
+              <div class="d-flex align-items-center">
+                <label for="volumeSlider" class="me-2">Volume :</label>
+                <input
+                  type="range"
+                  id="volumeSlider"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="1"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloc Location Info -->
+        <div class="col-md-4">
+          <div class="mb-5 card shadow">
+            <div class="card-body">
+              <h2 class="mb-3">
+                <i class="bi bi-geo-alt"></i> Informations de Localisation
+              </h2>
+              <p>
+                Obtenez des informations sur l'endroit où vous vous trouvez via
+                Wikipedia. Un résumé vous sera fourni par l'IA.
+              </p>
+              <hr />
+              <div class="d-flex align-items-center">
+                <button class="btn" id="getLocation">
+                  <i class="bi bi-map-fill text-primary fs-4"></i>
+                </button>
+                <span class="ms-2 text-muted" style="font-style: italic"
+                  >Cliquez pour obtenir les informations de localisation</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloc Restaurants -->
+        <div class="col-md-4">
+          <div class="mb-5 card shadow">
+            <div class="card-body">
+              <h2 class="mb-3"><i class="bi bi-shop"></i> Restaurants</h2>
+              <p>
+                Découvrez les restaurants à proximité. L'IA générera une
+                présentation des options autour de vous.
+              </p>
+              <hr />
+              <div class="d-flex align-items-center">
+                <button class="btn" id="getRestaurants">
+                  <i class="bi bi-geo-fill text-primary fs-4"></i>
+                </button>
+                <span class="ms-2 text-muted" style="font-style: italic"
+                  >Cliquez pour trouver des restaurants à proximité</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloc Accommodations -->
+        <div class="col-md-4">
+          <div class="mb-5 card shadow">
+            <div class="card-body">
+              <h2 class="mb-3"><i class="bi bi-building"></i> Hébergements</h2>
+              <p>
+                Découvrez les hébergements à proximité. L'IA générera une
+                présentation des options autour de vous.
+              </p>
+              <hr />
+              <div class="d-flex align-items-center">
+                <button class="btn" id="getAccomodations">
+                  <i class="bi bi-house-fill text-primary fs-4"></i>
+                </button>
+                <span class="ms-2 text-muted" style="font-style: italic"
+                  >Cliquez pour trouver des hébergements à proximité</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloc Culturals -->
+        <div class="col-md-4">
+          <div class="mb-5 card shadow">
+            <div class="card-body">
+              <h2 class="mb-3">
+                <i class="bi bi-columns"></i> Lieux culturels
+              </h2>
+              <p>
+                Découvrez les lieux culturels à proximité. L'IA générera une
+                présentation des options autour de vous.
+              </p>
+              <hr />
+              <div class="d-flex align-items-center">
+                <button class="btn" id="getCulturals">
+                  <i class="bi bi-collection-fill text-primary fs-4"></i>
+                </button>
+                <span class="ms-2 text-muted" style="font-style: italic"
+                  >Cliquez pour découvrir des lieux culturels à proximité</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloc Events -->
+        <div class="col-md-4">
+          <div class="mb-5 card shadow">
+            <div class="card-body">
+              <h2 class="mb-3"><i class="bi bi-calendar"></i> Événements</h2>
+              <p>
+                Découvrez les événements à proximité. L'IA générera une
+                présentation des options autour de vous.
+              </p>
+              <hr />
+              <div class="d-flex align-items-center">
+                <button class="btn" id="getEvents">
+                  <i class="bi bi-calendar-event-fill text-primary fs-4"></i>
+                </button>
+                <span class="ms-2 text-muted" style="font-style: italic"
+                  >Cliquez pour découvrir les événements proches de vous</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloc Transcribe Audio -->
+        <div class="col-md-4">
+          <div class="mb-5 card shadow">
+            <div class="card-body">
+              <h2 class="mb-3"><i class="bi bi-mic"></i> Transcrire Audio</h2>
+              <p>
+                Enregistrez une demande vocale via le micro de votre appareil.
+                Le texte sera ensuite converti automatiquement.
+              </p>
+              <hr />
+              <div class="d-flex align-items-center">
+                <button class="btn" id="startRecording">
+                  <i class="bi bi-record-circle-fill text-danger fs-4"></i>
+                </button>
+                <span class="ms-2 text-muted" style="font-style: italic"
+                  >Cliquez pour commencer l'enregistrement</span
+                >
+              </div>
+              <div class="d-flex align-items-center">
+                <button class="btn" id="stopRecording" disabled>
+                  <i class="bi bi-stop-circle-fill text-light fs-4"></i>
+                </button>
+                <span class="ms-2 text-muted" style="font-style: italic"
+                  >Cliquez pour arrêter l'enregistrement</span
+                >
+              </div>
+              <div class="alert mt-3 d-none" id="transcription"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-12">
+          <!-- Bloc Ask a Question -->
+          <div class="mb-5 card shadow">
+            <div class="card-body">
+              <h2 class="mb-3">
+                <i class="bi bi-question-circle"></i> Poser une Question
+              </h2>
+              <p>
+                Posez une question à l'IA en fonction du contexte (lieu actuel,
+                restaurants, etc.).
+              </p>
+              <div class="input-group mb-3">
+                <textarea
+                  class="form-control p-2 rounded pe-5"
+                  id="questionInput"
+                  name="questionInput"
+                  placeholder="Posez une question sur cet endroit..."
+                  required
+                  rows="1"
+                ></textarea>
+                <button class="btn" id="askQuestion">
+                  <i class="bi bi-send-fill text-success fs-5"></i>
+                </button>
+              </div>
+              <div class="alert alert-warning d-none" id="llmResponse"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="loadingSpinner"
+        class="spinner-border text-primary position-fixed top-0 end-0 m-3 d-none"
+        role="status"
+      >
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      <button
+        role="button"
+        id="stopGeneration"
+        class="position-fixed top-0 start-0 m-3 d-none btn btn-danger shadow"
+      >
+        <i class="bi bi-stop-circle-fill text-light"></i> Stop
+      </button>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="index.js" type="module"></script>
+  </body>
+</html>

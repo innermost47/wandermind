@@ -13,3 +13,7 @@ psycopg2
 httpx
 aiosmtplib
 uvicorn
+alembic
+pydantic
+pydantic[email]
+python-multipart

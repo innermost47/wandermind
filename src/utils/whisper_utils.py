@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from config import LOCKS, WHISPER_MODEL
 import whisper
 import torch
+from fastapi import UploadFile
 
 
 class WhisperUtils:
@@ -16,7 +17,7 @@ class WhisperUtils:
         )
         self.executor = ThreadPoolExecutor()
 
-    def convert_audio_to_wav(self, file, file_format):
+    def convert_audio_to_wav(self, file: UploadFile, file_format: str):
         try:
             if isinstance(file, BytesIO):
                 audio_file = file
@@ -47,24 +48,23 @@ class WhisperUtils:
             print(f"An error occured while trying to convert audio to wav: {e}")
             raise e
 
-    def transcribe_audio_sync(self, file, file_format):
-        with LOCKS["WHISPER"]:
-            try:
-                wav_file = self.convert_audio_to_wav(file, file_format)
-                with tempfile.NamedTemporaryFile(
-                    suffix=".wav", delete=False
-                ) as temp_wav_file:
-                    temp_wav_file.write(wav_file.read())
-                    temp_wav_file.flush()
-                    result = self.model.transcribe(temp_wav_file.name)
-                return result["text"]
-            except Exception as e:
-                print(f"An error occured while trying to transcribe audio: {e}")
-                raise e
+    def transcribe_audio_sync(self, file: UploadFile, file_format: str):
+        try:
+            wav_file = self.convert_audio_to_wav(file, file_format)
+            with tempfile.NamedTemporaryFile(
+                suffix=".wav", delete=False
+            ) as temp_wav_file:
+                temp_wav_file.write(wav_file.read())
+                temp_wav_file.flush()
+                result = self.model.transcribe(temp_wav_file.name)
+            return result["text"]
+        except Exception as e:
+            print(f"An error occured while trying to transcribe audio: {e}")
+            raise e
 
-    async def transcribe_audio(self, file, file_format, lock):
-        async with lock:
+    async def transcribe_audio(self, file: UploadFile, file_format: str):
+        async with LOCKS["WHISPER"]:
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(
-                self.executor, self.transcribe_audio_sync, file, file_format, lock
+                self.executor, self.transcribe_audio_sync, file, file_format
             )
