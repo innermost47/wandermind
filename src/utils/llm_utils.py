@@ -1,16 +1,37 @@
 from .audio_utils import text_to_speech_to_memory
-from config import LOCKS, LLM_MODEL, N_CTX_SIZE, N_GPU_LAYERS
+from config import LOCKS, LLAMA_CPP_API_URL
 from typing import List
-from llama_cpp import Llama
+from openai import AsyncOpenAI
 
 
 class LLMUtils:
     def __init__(self):
-        self.llm = Llama(
-            model_path=LLM_MODEL,
-            n_ctx=N_CTX_SIZE,
-            n_gpu_layers=N_GPU_LAYERS,
-        )
+        self.client = None
+
+    async def _init_client(self):
+        if self.client is None:
+            self.client = AsyncOpenAI(
+                base_url=LLAMA_CPP_API_URL,
+                api_key="wandermid",
+            )
+
+    async def _handle_llm_api_call(self, messages: List[dict]):
+        try:
+            await self._init_client()
+            response = await self.client.chat.completions.create(
+                model="wandermid",
+                messages=messages,
+                stream=True,
+                temperature=0.7,
+                top_p=0.9,
+            )
+            async for chunk in response:
+                if chunk.choices[0].delta.content is not None:
+                    yield chunk.choices[0].delta.content
+        except Exception as e:
+            print(
+                f"An unexpected error occured while trying to generate an answer: {e}"
+            )
 
     async def query(
         self,
@@ -21,7 +42,7 @@ class LLMUtils:
         async with LOCKS["LLAMA"]:
             if not context or context.strip() == "":
                 auto_message = "We couldn't find any relevant information for this location. Please try another place."
-                yield {"text": auto_message, "audio": None}
+                yield {"text": auto_message, "audio": None, "context": None}
                 return
             if not memory:
                 memory = []
@@ -46,30 +67,23 @@ class LLMUtils:
                     },
                 ]
             )
-            output = self.llm.create_chat_completion(
-                messages=messages,
-                stream=True,
-            )
+            output = self._handle_llm_api_call(messages=messages)
 
             buffer = ""
             content = ""
-            for chunk in output:
-                delta = chunk["choices"][0]["delta"]
-                if "content" in delta:
-                    yield {"text": delta["content"], "audio": None, "context": None}
-                    buffer += delta["content"]
-                    content += delta["content"]
+            async for chunk in output:
+                yield {"text": chunk, "audio": None, "context": None}
+                buffer += chunk
+                content += chunk
 
-                    if len(buffer) >= 100 or any(
-                        char in ".,;?!:" for char in delta["content"]
-                    ):
-                        audio_buffer = await text_to_speech_to_memory(buffer)
-                        buffer = ""
-                        yield {
-                            "text": None,
-                            "audio": audio_buffer,
-                            "context": None,
-                        }
+                if len(buffer) >= 100 or any(char in ".,;?!:" for char in chunk):
+                    audio_buffer = await text_to_speech_to_memory(buffer)
+                    buffer = ""
+                    yield {
+                        "text": None,
+                        "audio": audio_buffer,
+                        "context": None,
+                    }
 
             if buffer.strip():
                 audio_buffer = await text_to_speech_to_memory(buffer)

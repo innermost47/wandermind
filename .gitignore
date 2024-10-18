@@ -4,3 +4,6 @@ model/*
 !model/.gitkeep
 front/node_modules
 .env
+llama.cpp/*
+!llama.cpp/.gitkeep
+llama.log

@@ -92,7 +92,7 @@ function prepareNewRequest() {
 
 async function fetchLocationData(category = null, query = null) {
   try {
-    if (apiKey.value !== "") {
+    if (localStorage.getItem("apiKey")) {
       prepareNewRequest();
       saveButtonStates();
       setButtonsDisabled(true);
@@ -225,7 +225,7 @@ function renderMarkdown(parser, text) {
 
 async function generate() {
   try {
-    if (apiKey.value !== "" && localStorage.getItem("context")) {
+    if (localStorage.getItem("apiKey") && localStorage.getItem("context")) {
       prepareNewRequest();
       const question = questionInput.value;
       questionInput.value = "";
@@ -263,7 +263,7 @@ async function generate() {
 }
 
 async function handleRecording() {
-  if (apiKey.value !== "") {
+  if (localStorage.getItem("apiKey")) {
     let mediaRecorder;
     let audioChunks = [];
     let stream;
@@ -387,7 +387,6 @@ async function login() {
 
 async function checkApiKey() {
   try {
-    console.log(apiKey.value);
     const response = await fetch(apiUrl + "/check-api-key", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -460,6 +459,8 @@ if (startRecording && stopRecording) {
 
 if (localStorage.getItem("apiKey")) {
   await checkApiKey();
+} else {
+  loginContainer.classList.remove("d-none");
 }
 
 window.addEventListener("scroll", checkScrollPosition);
