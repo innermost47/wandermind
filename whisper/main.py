@@ -28,7 +28,7 @@ async def convert_audio_to_wav(file: UploadFile, file_format: str):
         file_data = await file.read()
         audio_file = BytesIO(file_data)
         audio_file.seek(0)
-        if file_format == "webm":
+        if file_format == "webm" or file_format == "mp3":
             audio = (
                 AudioSegment.from_file(audio_file).set_frame_rate(16000).set_channels(1)
             )
