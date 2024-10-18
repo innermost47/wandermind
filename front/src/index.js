@@ -17,6 +17,10 @@ const llmResponse = document.getElementById("llmResponse");
 const stopGeneration = document.getElementById("stopGeneration");
 const loadingSpinner = document.getElementById("loadingSpinner");
 const apiKey = document.getElementById("apiKey");
+const loginBtn = document.getElementById("loginBtn");
+const loginContainer = document.getElementById("loginContainer");
+const main = document.getElementById("main");
+const wrongApiKey = document.getElementById("wrongApiKey");
 
 let controller = new AbortController();
 let autoScrollEnabled = true;
@@ -106,7 +110,7 @@ async function fetchLocationData(category = null, query = null) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + apiKey.value,
+          Authorization: "Bearer " + localStorage.getItem("apiKey"),
         },
         body: JSON.stringify({
           latitude: latitude,
@@ -238,7 +242,7 @@ async function generate() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + apiKey.value,
+          Authorization: "Bearer " + localStorage.getItem("apiKey"),
         },
         body: JSON.stringify({
           prompt: question,
@@ -285,10 +289,10 @@ async function handleRecording() {
             transcription.classList.add("alert-info");
             transcription.textContent = "Transcription en cours...";
             try {
-              const response = await fetch("./transcribe", {
+              const response = await fetch(apiUrl + "/transcribe", {
                 method: "POST",
                 body: formData,
-                Authorization: "Bearer " + apiKey.value,
+                Authorization: "Bearer " + localStorage.getItem("apiKey"),
               });
               if (response.status >= 300) {
                 transcription.classList.remove("alert-info");
@@ -359,6 +363,50 @@ function attachEventListener(buttonElement, eventType, handlerFunction) {
   }
 }
 
+async function login() {
+  try {
+    const response = await fetch(apiUrl + "/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ api_key: apiKey.value }),
+    });
+    if (response.status == 200) {
+      const data = await response.json();
+      localStorage.setItem("apiKey", apiKey.value);
+      console.log(data);
+      loginContainer.classList.add("d-none");
+      main.classList.remove("d-none");
+    } else {
+      wrongApiKey.classList.remove("d-none");
+      wrongApiKey.innerText = "Clé d'API inconnue.";
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function checkApiKey() {
+  try {
+    console.log(apiKey.value);
+    const response = await fetch(apiUrl + "/check-api-key", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ api_key: localStorage.getItem("apiKey") }),
+    });
+    if (response.status == 200) {
+      loginContainer.classList.add("d-none");
+      main.classList.remove("d-none");
+    } else {
+      localStorage.removeItem("apiKey");
+      loginContainer.classList.remove("d-none");
+      main.classList.add("d-none");
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+attachEventListener(loginBtn, "click", () => login());
 attachEventListener(getLocation, "click", () =>
   fetchLocationData(categories.wikipedia)
 );
@@ -408,6 +456,10 @@ attachEventListener(volumeSlider, "input", (event) => {
 
 if (startRecording && stopRecording) {
   handleRecording();
+}
+
+if (localStorage.getItem("apiKey")) {
+  await checkApiKey();
 }
 
 window.addEventListener("scroll", checkScrollPosition);

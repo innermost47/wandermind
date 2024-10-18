@@ -1,5 +1,11 @@
 from fastapi import FastAPI
-from src.routers import BaseRouter, GenerationRouter, WhisperRouter, UserRouter
+from src.routers import (
+    BaseRouter,
+    GenerationRouter,
+    WhisperRouter,
+    UserRouter,
+    AuthRouter,
+)
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from typing import List
@@ -19,6 +25,7 @@ class TouristApp:
             GenerationRouter(),
             UserRouter(),
             WhisperRouter(),
+            AuthRouter(),
         ]
         self._db = next(get_db())
         self._initialize_app()

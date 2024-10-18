@@ -1,5 +1,4 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
-from typing import Optional, List
 
 
 class UserSchema(BaseModel):
