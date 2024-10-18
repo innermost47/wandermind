@@ -7,3 +7,4 @@ front/node_modules
 llama.cpp/*
 !llama.cpp/.gitkeep
 llama.log
+nohup.out

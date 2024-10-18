@@ -6,7 +6,6 @@ import asyncio
 load_dotenv()
 
 LOCKS = {
-    "WHISPER": asyncio.Lock(),
     "LLAMA": asyncio.Semaphore(int(os.environ.get("LLAMA_CPP_THREADS"))),
     "GTTS": asyncio.Lock(),
 }
@@ -22,3 +21,4 @@ WHISPER_MODEL = os.environ.get("WHISPER_MODEL")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
 ENVIRONMENT = os.environ.get("ENVIRONMENT")
 LLAMA_CPP_API_URL = os.environ.get("LLAMA_CPP_API_URL")
+WHISPER_API_URL = os.environ.get("WHISPER_API_URL")

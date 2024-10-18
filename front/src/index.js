@@ -292,7 +292,9 @@ async function handleRecording() {
               const response = await fetch(apiUrl + "/transcribe", {
                 method: "POST",
                 body: formData,
-                Authorization: "Bearer " + localStorage.getItem("apiKey"),
+                headers: {
+                  Authorization: "Bearer " + localStorage.getItem("apiKey"),
+                },
               });
               if (response.status >= 300) {
                 transcription.classList.remove("alert-info");
@@ -373,7 +375,6 @@ async function login() {
     if (response.status == 200) {
       const data = await response.json();
       localStorage.setItem("apiKey", apiKey.value);
-      console.log(data);
       loginContainer.classList.add("d-none");
       main.classList.remove("d-none");
     } else {
