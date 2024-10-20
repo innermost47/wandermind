@@ -26,11 +26,10 @@ def strip_markdown(text):
     return cleaned
 
 
-def text_to_speech_sync(text: str):
+def text_to_speech_sync(plain_text: str):
     try:
-        if not text or not text.strip():
+        if not plain_text or not plain_text.strip():
             return None
-        plain_text = strip_markdown(text)
         tts = gTTS(text=plain_text, lang="fr")
         audio_buffer = BytesIO()
         tts.write_to_fp(audio_buffer)
@@ -42,7 +41,7 @@ def text_to_speech_sync(text: str):
         return None
 
 
-async def text_to_speech_eleven_labs(text):
+async def text_to_speech_eleven_labs(plain_text):
     CHUNK_SIZE = 1024
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVEN_LABS_VOICE_ID}"
 
@@ -53,7 +52,7 @@ async def text_to_speech_eleven_labs(text):
     }
 
     data = {
-        "text": text,
+        "text": plain_text,
         "model_id": ELEVEN_LABS_MODEL_ID,
         "voice_settings": {"stability": 0.5, "similarity_boost": 0.5},
     }
@@ -73,10 +72,11 @@ async def text_to_speech_eleven_labs(text):
 
 
 async def text_to_speech_to_memory(text):
+    plain_text = strip_markdown(text)
     if not USE_ELEVEN_LABS:
         async with LOCKS["GTTS"]:
             loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(executor, text_to_speech_sync, text)
+            return await loop.run_in_executor(executor, text_to_speech_sync, plain_text)
     else:
         async with LOCKS["ELEVEN_LABS"]:
-            return await text_to_speech_eleven_labs(text)
+            return await text_to_speech_eleven_labs(plain_text)
