@@ -70,22 +70,11 @@ class LLMUtils:
             output = self._handle_llm_api_call(messages=messages)
 
             buffer = ""
-            content = ""
             async for chunk in output:
                 yield {"text": chunk, "audio": None, "context": None}
                 buffer += chunk
-                content += chunk
-
                 if len(buffer) >= 512 or any(char in ".?!" for char in chunk):
-                    audio_buffer = await text_to_speech_to_memory(buffer)
+                    yield {"buffer": buffer}
                     buffer = ""
-                    yield {
-                        "text": None,
-                        "audio": audio_buffer,
-                        "context": None,
-                    }
-
-            if buffer.strip():
-                audio_buffer = await text_to_speech_to_memory(buffer)
-                yield {"text": None, "audio": audio_buffer, "context": None}
+            yield {"buffer": buffer}
             yield {"text": None, "audio": None, "context": context}

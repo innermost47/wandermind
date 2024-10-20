@@ -4,9 +4,9 @@ from src.utils import (
     LLMUtils,
     get_wikipedia_data,
     get_nearby_events,
+    text_to_speech_to_memory,
 )
 import json
-import sys
 import asyncio
 from src.schemas import GenerateSchema
 
@@ -81,7 +81,15 @@ class GenerationService:
             ):
                 data = json.dumps(chunk).encode("utf-8") + b"<|end_of_chunk|>"
                 yield data
-                sys.stdout.flush()
+                if "buffer" in chunk:
+                    audio_buffer = await text_to_speech_to_memory(chunk["buffer"])
+                    yield json.dumps(
+                        {
+                            "text": None,
+                            "audio": audio_buffer,
+                            "context": None,
+                        }
+                    ).encode("utf-8") + b"<|end_of_chunk|>"
                 await asyncio.sleep(0)
 
         return StreamingResponse(

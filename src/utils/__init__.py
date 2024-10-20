@@ -4,3 +4,4 @@ from .llm_utils import LLMUtils
 from .openagenda_utils import get_nearby_events
 from .wikipedia_utils import get_wikipedia_data
 from .auth_utils import AuthUtils
+from .audio_utils import text_to_speech_to_memory
