@@ -68,6 +68,7 @@ class GenerationService:
             and not generate_schema.longitude
         ):
             context = generate_schema.context
+            prompt = generate_schema.prompt
         else:
             return {
                 "error": "No location context available. Please select a location first."
