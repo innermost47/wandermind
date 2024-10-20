@@ -25,3 +25,5 @@ LLAMA_CPP_API_URL = os.environ.get("LLAMA_CPP_API_URL")
 WHISPER_API_URL = os.environ.get("WHISPER_API_URL")
 USE_ELEVEN_LABS = True if os.environ.get("USE_ELEVEN_LABS") == "True" else False
 ELEVEN_LABS_API_KEY = os.environ.get("ELEVEN_LABS_API_KEY")
+ELEVEN_LABS_VOICE_ID = os.environ.get("ELEVEN_LABS_VOICE_ID")
+ELEVEN_LABS_MODEL_ID = os.environ.get("ELEVEN_LABS_MODEL_ID")

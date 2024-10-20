@@ -5,7 +5,13 @@ from markdown import markdown
 import re
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from config import LOCKS, USE_ELEVEN_LABS, ELEVEN_LABS_API_KEY
+from config import (
+    LOCKS,
+    USE_ELEVEN_LABS,
+    ELEVEN_LABS_API_KEY,
+    ELEVEN_LABS_MODEL_ID,
+    ELEVEN_LABS_VOICE_ID,
+)
 from io import BytesIO
 import aiohttp
 
@@ -38,7 +44,7 @@ def text_to_speech_sync(text: str):
 
 async def text_to_speech_eleven_labs(text):
     CHUNK_SIZE = 1024
-    url = "https://api.elevenlabs.io/v1/text-to-speech/pMsXgVXv3BLzUgSXRplE"
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVEN_LABS_VOICE_ID}"
 
     headers = {
         "Accept": "audio/mpeg",
@@ -48,7 +54,7 @@ async def text_to_speech_eleven_labs(text):
 
     data = {
         "text": text,
-        "model_id": "eleven_multilingual_v1",
+        "model_id": ELEVEN_LABS_MODEL_ID,
         "voice_settings": {"stability": 0.5, "similarity_boost": 0.5},
     }
 
