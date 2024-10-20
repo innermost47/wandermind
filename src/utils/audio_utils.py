@@ -5,8 +5,9 @@ from markdown import markdown
 import re
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from config import LOCKS
+from config import LOCKS, USE_ELEVEN_LABS, ELEVEN_LABS_API_KEY
 from io import BytesIO
+import aiohttp
 
 executor = ThreadPoolExecutor()
 
@@ -35,7 +36,41 @@ def text_to_speech_sync(text: str):
         return None
 
 
+async def text_to_speech_eleven_labs(text):
+    CHUNK_SIZE = 1024
+    url = "https://api.elevenlabs.io/v1/text-to-speech/pMsXgVXv3BLzUgSXRplE"
+
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": ELEVEN_LABS_API_KEY,
+    }
+
+    data = {
+        "text": text,
+        "model_id": "eleven_multilingual_v1",
+        "voice_settings": {"stability": 0.5, "similarity_boost": 0.5},
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=data, headers=headers) as response:
+            if response.status == 200:
+                audio_buffer = BytesIO()
+                async for chunk in response.content.iter_chunked(CHUNK_SIZE):
+                    audio_buffer.write(chunk)
+                audio_buffer.seek(0)
+                audio_base64 = base64.b64encode(audio_buffer.getvalue()).decode("utf-8")
+                return audio_base64
+            else:
+                print(f"Erreur : {response.status}")
+                return None
+
+
 async def text_to_speech_to_memory(text):
-    async with LOCKS["GTTS"]:
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(executor, text_to_speech_sync, text)
+    if not USE_ELEVEN_LABS:
+        async with LOCKS["GTTS"]:
+            loop = asyncio.get_event_loop()
+            return await loop.run_in_executor(executor, text_to_speech_sync, text)
+    else:
+        async with LOCKS["ELEVEN_LABS"]:
+            return await text_to_speech_eleven_labs(text)

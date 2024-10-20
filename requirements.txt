@@ -21,3 +21,5 @@ pydantic
 pydantic[email]
 python-multipart
 openai
+elevenlabs
+aiohttp

@@ -8,7 +8,10 @@ export const config = {
 };
 
 export const environment =
-  window.location.hostname === "127.0.0.1" ? "development" : "production";
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+    ? "development"
+    : "production";
 
 export const apiUrl = config[environment].apiUrl;
 

@@ -76,7 +76,7 @@ class LLMUtils:
                 buffer += chunk
                 content += chunk
 
-                if len(buffer) >= 100 or any(char in ".,;?!:" for char in chunk):
+                if len(buffer) >= 512 or any(char in ".?!" for char in chunk):
                     audio_buffer = await text_to_speech_to_memory(buffer)
                     buffer = ""
                     yield {
